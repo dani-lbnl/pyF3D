@@ -10,6 +10,9 @@ class FFTFilter:
 
     def __init__(self, FFTChoice='Forward'):
 
+        if FFTChoice not in self.FFTChoice:
+            raise ValueError("'FFTChoice' parameter must be either 'Forward' or 'Inverse'")
+
         self.name = 'FFTFilter'
         self.selectedFFTChoice = FFTChoice
 

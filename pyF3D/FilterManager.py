@@ -8,6 +8,7 @@ import ClAttributes
 import FilterAttributes
 import filters.MedianFilter as mf
 import filters.FFTFilter as fft
+import filters.BilateralFilter as bf
 import helpers
 
 def runPipeline(image, pipeline, device=None):
@@ -30,6 +31,7 @@ def runPipeline(image, pipeline, device=None):
             kwargs = {'image': image, 'pipeline': pipeline, 'overlapAmount': overlapAmount, 'attr': atts,
                       'startIndex': startIndex, 'clattr': clattr, 'index': index, 'stacks': stacks}
             e.submit(doFilter, **kwargs)
+            # doFilter(**kwargs) #debug
 
     return stacks
 
@@ -43,6 +45,9 @@ def run_FFTFilter(image, FFTChoice='Forward', device=None):
     pipeline = [fft.FFTFilter(FFTChoice=FFTChoice)]
     return runPipeline(image, pipeline, device=device)
 
+def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, device=None):
+    pipeline = [bf.BilateralFilter(spatialRadius=spatialRadius, rangeRadius=rangeRadius)]
+    return runPipeline(image, pipeline, device=device)
 
 def doFilter(image, pipeline, overlapAmount, attr, startIndex, clattr, index, stacks):
 
@@ -138,7 +143,6 @@ def getNextRange(image, startIndex, range, sliceCount):
 
 
 def test_median():
-    import tifffile
     image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
     image = helpers.scale_to_uint8(image)[:10]
 
@@ -148,7 +152,6 @@ def test_median():
     tifffile.imsave('/home/hparks/Desktop/test2.tif', stacks[0].stack)
 
 def test_fft():
-    import tifffile
     image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
     image = helpers.scale_to_uint8(image)[:10]
 
@@ -159,5 +162,16 @@ def test_fft():
     # tifffile.imsave('/home/hparks/Desktop/forward.tif', stacks[0].stack)
     tifffile.imsave('/home/hparks/Desktop/inverse.tif', stacks[0].stack)
 
+def test_bilateral():
+    image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
+    image = helpers.scale_to_uint8(image)[:10]
+
+    # stacks = run_FFTFilter(image)
+    stacks = run_BilateralFilter(image, 3, 30)
+    # for stack in stacks:
+    #     print stack.stack
+    tifffile.imsave('/home/hparks/Desktop/bilateral.tif', stacks[0].stack)
+
 if __name__ == '__main__':
-    test_fft()
+    import tifffile
+    test_bilateral()

@@ -65,10 +65,82 @@ class BilateralFilter:
         if 'CPU' in self.clattr.device.name: minWorkingGroup = 64
 
         bufferSize = radius**2 - 1
-        localSize = min(self.clattr.device.)
+        localSize = min(self.clattr.device.max_work_group_size, minWorkingGroup)
+        globalSize = self.clattr.roundUp(localSize, bufferSize)*np.float32(0).nbytes
+
+        #might need to change size
+        buffer = cl.Buffer(self.clattr.context, cl.mem_flags.READ_WRITE, size = globalSize)
+        kernel = cl.Kernel(self.program, 'makeKernel')
+        kernel.set_args(np.float32(radius), buffer, np.int32(bufferSize))
+
+        kernel_time = time.time()
+        globalSize = [int(globalSize)]
+        localSize = [int(localSize)]
+
+        cl.enqueue_nd_range_kernel(self.clattr.queue, kernel, globalSize, localSize)
+        output = np.empty(bufferSize).astype(np.float32)
+        cl.enqueue_copy(self.clattr.queue, output, buffer)
+        self.clattr.queue.finish()
+
+        total = np.float32(0)
+        for i in range(bufferSize):
+            total += output[i]
+
+        normalizeKernel = cl.Kernel(self.program, 'normalizeKernel')
+        normalizeKernel.set_args(np.float32(total), buffer, np.int32(bufferSize))
+        cl.enqueue_nd_range_kernel(self.clattr.queue, normalizeKernel, globalSize, localSize)
+        kernel_time = time.time() - kernel_time
+
+        del(kernel)
+        del(normalizeKernel)
+
+        return buffer
 
 
+    def loadKernel(self):
+        try:
+            filename = "BilateralFiltering.cl"
+            self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
+        except Exception:
+            return  False
 
+        self.spatialKernel = self.makeKernel(self.spatialRadius)
+        self.rangeKernel = self.makeKernel(self.rangeRadius)
+        self.kernel = cl.Kernel(self.program, 'BilateralFilter')
+        return True
+
+    def runFilter(self):
+
+        globalSize = [0, 0]
+        localSize = [0, 0]
+        self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height, 1])
+
+        try:
+            self.kernel.set_args(self.clattr.inputBuffer, self.clattr.outputBuffer, np.int32(self.atts.width),
+                                 np.int32(self.atts.height), np.int32(self.clattr.maxSliceCount + self.getInfo().overlapZ),
+                                 self.spatialKernel, np.int32((self.spatialRadius+1)*2 - 1),
+                                 self.rangeKernel, np.int32((self.rangeRadius+1)*2 - 1))
+
+            cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel, globalSize, localSize)
+
+        except Exception as e:
+            raise e
+
+        # write results
+        cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
+        self.clattr.queue.finish()
+        return True
+
+    def releaseKernel(self):
+        if self.spatialKernel: del(self.spatialKernel)
+        if self.rangeKernel: del(self.rangeKernel)
+        if self.kernel: del(self.kernel)
+        return True
+
+    def setAttributes(self, CLAttributes, atts, idx):
+        self.clattr = CLAttributes
+        self.index = idx
+        self.atts = atts
 
 
 
