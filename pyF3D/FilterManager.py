@@ -18,17 +18,16 @@ def runPipeline(image, pipeline, device=None):
     stacks = []
 
     # at this point we have a list of devices, contexts, and queues
+    atts = FilterAttributes.FilteringAttributes()
     with cf.ThreadPoolExecutor(len(device)) as e:
         for i in range(len(device)):
             dev = device[i]
             ctx = context[i]
             q = queue[i]
-            overlapAmount = 0
-            atts = FilterAttributes.FilteringAttributes()
-            index = i #what is this used for?
+            index = i
             clattr = ClAttributes.ClAttributes(ctx, dev, q, None, None, None)
             clattr.setMaxSliceCount(image)
-            kwargs = {'image': image, 'pipeline': pipeline, 'overlapAmount': overlapAmount, 'attr': atts,
+            kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts,
                       'startIndex': startIndex, 'clattr': clattr, 'index': index, 'stacks': stacks}
             e.submit(doFilter, **kwargs)
             # doFilter(**kwargs) #debug
@@ -49,7 +48,7 @@ def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, device=None):
     pipeline = [bf.BilateralFilter(spatialRadius=spatialRadius, rangeRadius=rangeRadius)]
     return runPipeline(image, pipeline, device=device)
 
-def doFilter(image, pipeline, overlapAmount, attr, startIndex, clattr, index, stacks):
+def doFilter(image, pipeline, attr, startIndex, clattr, index, stacks):
 
     start = startIndex
     maxOverlap = 0
@@ -57,7 +56,7 @@ def doFilter(image, pipeline, overlapAmount, attr, startIndex, clattr, index, st
         maxOverlap = max(maxOverlap, filter.getInfo().overlapZ)
 
     maxSliceCount = clattr.maxSliceCount
-    clattr.initializeData(image, attr, overlapAmount, maxSliceCount)
+    clattr.initializeData(image, attr, maxOverlap, maxSliceCount)
 
     for filter in pipeline:
         if filter.getInfo().useTempBuffer:
@@ -73,6 +72,7 @@ def doFilter(image, pipeline, overlapAmount, attr, startIndex, clattr, index, st
         attr.sliceEnd = stackRange[1]
         clattr.loadNextData(image, attr, stackRange[0], stackRange[1], maxOverlap)
         maxSliceCount = stackRange[1] - stackRange[0]
+        attr.overlap[index] = maxOverlap
 
         pipelineTime = 0
         for i in range(len(pipeline)):

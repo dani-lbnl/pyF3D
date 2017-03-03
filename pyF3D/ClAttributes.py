@@ -114,12 +114,13 @@ class ClAttributes(object):
         return True
 
     def writeNextData(self, atts, startRange, endRange, overlap):
-        # startIndex = 0 if startRange==0 else overlap
+        startIndex = 0 if startRange==0 else overlap
         length = endRange - startRange
         # output = np.empty((length,atts.height, atts.width)).astype(np.uint8)
-        output = np.empty(length*atts.width*atts.height).astype(np.uint8)
+        output = np.empty((length + 2*startIndex)*atts.width*atts.height).astype(np.uint8)
         cl.enqueue_copy(self.queue, output, self.outputBuffer)
-        output = output.reshape(length, atts.height, atts.width)
+        output = output.reshape((startIndex+length), atts.height, atts.width)
+        output = output[startIndex:startIndex+length]
         # output = output.transpose()
         # image = np.append(image, output, axis=0)
         # return image

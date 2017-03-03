@@ -66,15 +66,14 @@ class MaskFilter:
         globalSize = [0]
         localSize = [0]
 
-        # these lines need work w/helper methods
         self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height,
-                                                self.clattr.maxSliceCount + self.atts.overlap[self.clattr.index]])
-        self.maskBuffer = self.atts.getStructElement(self.clattr.context, mask, globalSize[0])
+                                                self.clattr.maxSliceCount + self.atts.overlap[self.index]])
+        self.maskBuffer = self.atts.getStructElement(self.clattr.context, self.clattr.queue, mask, globalSize[0])
 
         try:
             self.kernel.set_args(self.clattr.inputBuffer, self.maskBuffer, self.clattr.outputBuffer,
                                  np.int32(self.atts.width), np.int32(self.atts.height),
-                                 np.int32(self.clattr.maxSliceCount + self.atts.overlap[self.clattr.index]))
+                                 np.int32(self.clattr.maxSliceCount + self.atts.overlap[self.index]))
 
             # TODO: worry about copying data here? as is done in JOCL filters?
 
@@ -97,10 +96,10 @@ class MaskFilter:
         if self.kernel: del(self.kernel)
         return True
 
-    def setAttributes(self, CLAttributes, atts, idx):
+    def setAttributes(self, CLAttributes, atts, index):
         self.clattr = CLAttributes
-        self.index = idx
         self.atts = atts
+        self.index = index
 
 
 

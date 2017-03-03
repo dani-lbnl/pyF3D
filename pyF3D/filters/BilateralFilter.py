@@ -137,10 +137,10 @@ class BilateralFilter:
         if self.kernel: del(self.kernel)
         return True
 
-    def setAttributes(self, CLAttributes, atts, idx):
+    def setAttributes(self, CLAttributes, atts, index):
         self.clattr = CLAttributes
-        self.index = idx
         self.atts = atts
+        self.index = index
 
 
 
