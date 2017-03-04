@@ -11,6 +11,7 @@ import filters.FFTFilter as fft
 import filters.BilateralFilter as bf
 import filters.MaskFilter as mskf
 import filters.MMFilterDil as mmdil
+import filters.MMFilterEro as mmero
 import helpers
 
 def runPipeline(image, pipeline, device=None):
@@ -98,6 +99,10 @@ def run_MMFilterDil(image, mask='StructuredElementL', L=3, device=None):
     :return:
     """
     pipeline = [mmdil.MMFilterDil(mask=mask,L=L)]
+    return runPipeline(image, pipeline, device=device)
+
+def run_MMFilterEro(image, mask="StructuredElementL", L=3, device=None):
+    pipeline = [mmero.MMFilterEro(mask=mask, L=L)]
     return runPipeline(image, pipeline, device=device)
 
 def doFilter(image, pipeline, attr, startIndex, clattr, index, stacks):
@@ -243,6 +248,15 @@ def test_mmdil():
     #     print stack.stack
     tifffile.imsave('/home/hparks/Desktop/mmdil.tif', stacks[0].stack)
 
+def test_mmero():
+    image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
+    image = helpers.scale_to_uint8(image)[:10]
+
+    stacks = run_MMFilterEro(image, mask='Diagonal10x10x10')
+    # for stack in stacks:
+    #     print stack.stack
+    tifffile.imsave('/home/hparks/Desktop/mmero.tif', stacks[0].stack)
+
 if __name__ == '__main__':
     import tifffile
-    test_mmdil()
+    test_mmero()
