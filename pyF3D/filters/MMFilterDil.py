@@ -4,7 +4,7 @@ import pyopencl as cl
 import time
 from pyF3D import helpers
 
-class MaskFilter:
+class MMFilterDil:
 
     allowedMasks = ['StructuredElementL', 'Diagonal3x3x3', 'Diagonal10x10x4',
                           'Diagonal10x10x10']
@@ -35,7 +35,9 @@ class MaskFilter:
 
     def overlapAmount(self):
         # return number of slices in mask - how to determine this?
-        pass
+
+        # for the 10x10x4 diagonal case for testing
+        return 10
 
     def loadKernel(self):
 
@@ -55,7 +57,7 @@ class MaskFilter:
         localSize = [0, 0]
         self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height, 1])
 
-        for i in range(maskImages.shape[0]):
+        for i in range(len(maskImages)):
             mask = maskImages[i]
             size = [0, 0, 0]
             size[2] = mask.shape[0]
@@ -85,22 +87,21 @@ class MaskFilter:
                 tmpBuffer1 = self.clattr.outputTmpBuffer if i%2 != 0 else self.clattr.outputBuffer
                 tmpBuffer2 = self.clattr.outputTmpBuffer if i%2 == 0 else self.clattr.outputBuffer
 
-                self.kernel2.set_args(tmpBuffer1, tmpBuffer2, np.int32(self.atts.width), np.int32(self.atts.height),
+                self.kernel2.set_args(self.clattr.inputBuffer, tmpBuffer1, tmpBuffer2, np.int32(self.atts.width),
+                                      np.int32(self.atts.height),
                                       np.int32(self.clattr.maxSliceCount + self.atts.overlap[self.index]),
                                       structElem, np.int32(size[0]), np.int32(size[1]), np.int32(size[2]),
                                       np.int32(startOffset), np.int32(endOffset))
 
-                try:
-                    cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel, globalSize, localSize)
+            try:
+                cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel if i ==0 else self.kernel2,
+                                           globalSize, localSize)
+            except Exception:
+                return False
 
-                    cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel if i ==0 else self.kernel2,
-                                               globalSize, localSize)
-                except Exception:
-                    return False
+            structElem.release()
 
-                structElem.release()
-
-        if maskImages.shape[0]%2 != 0:
+        if len(maskImages)%2 != 0:
             tmpBuffer = self.clattr.outputTmpBuffer
             self.clattr.outputTmpBuffer = self.clattr.outputBuffer
             self.clattr.outputBuffer = tmpBuffer
@@ -112,16 +113,21 @@ class MaskFilter:
         # TODO: check if mask is valid - probably needs similar machinery to self.overlapAmount
 
         filter_time = time.time()
-        self.unKernel(self.maskImages, self.overlapAmount());
+
+        maskImages = self.atts.getMaskImages(self.mask, self.L)
+        self.runKernel(maskImages, self.overlapAmount())
 
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
         filter_time = time.time() - filter_time
 
         return True
 
+    def releaseKernel(self):
+        if self.kernel: del(self.kernel)
+        if self.kernel2: del(self.kernel2)
 
 
-def setAttributes(self, CLAttributes, atts, index):
-        self.clattr = CLAttributes
-        self.atts = atts
-        self.index = index
+    def setAttributes(self, CLAttributes, atts, index):
+            self.clattr = CLAttributes
+            self.atts = atts
+            self.index = index

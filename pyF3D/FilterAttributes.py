@@ -1,6 +1,6 @@
 import numpy as np
 import pyopencl as cl
-
+import re
 
 class FilteringAttributes:
 
@@ -20,9 +20,33 @@ class FilteringAttributes:
         self.MAX_STRUCTELEM_SIZE = 21*21*21
         self.internalImages = ["StructuredElementL", "Diagonal3x3x3", "Diagonal10x10x4", "Diagonal10x10x10"]
 
-    def parseImage(self):
-        # calls helper functions (buildStructElementArray, etc) when requested
-        pass
+    def getMaskImages(self, maskImage, maskL):
+        images = []
+        self.parseImage(maskImage, maskL, images)
+        return images
+
+    def parseImage(self, inputString, maskL, images):
+
+        if len(inputString) == 0:
+            return False
+
+        if inputString.startswith('StructuredElementL'):
+            if images is not None:
+                for image in self.buildStructElementArray(maskL):
+                    images.append(image)
+            return True
+        elif re.match("Diagonal\d{1,2}x\d{1,2}x\d{1,2}", inputString):
+            matches = re.findall("\d{1,2}", inputString)
+            x = int(matches[0])
+            y = int(matches[1])
+            z = int(matches[2])
+
+            if images is not None:
+                images.append(self.buildDiagonalImage(x, y, z))
+        else:
+            # TODO: fill in for custom masks
+            pass
+
 
     def buildStructElementArray(self, L):
 
@@ -90,7 +114,7 @@ class FilteringAttributes:
         return images
 
     def buildDiagonalImage(self, width, height, slices):
-        stack = np.zeros((int(slices), int(height), int(width)))
+        stack = np.zeros((int(slices), int(height), int(width))).astype(np.uint8)
         for i in range(int(slices)):
             prc = stack[i]
             endIndex = int(width) if int(width)<int(height) else int(height)

@@ -9,6 +9,8 @@ import FilterAttributes
 import filters.MedianFilter as mf
 import filters.FFTFilter as fft
 import filters.BilateralFilter as bf
+import filters.MaskFilter as mskf
+import filters.MMFilterDil as mmdil
 import helpers
 
 def runPipeline(image, pipeline, device=None):
@@ -19,6 +21,7 @@ def runPipeline(image, pipeline, device=None):
 
     # at this point we have a list of devices, contexts, and queues
     atts = FilterAttributes.FilteringAttributes()
+    atts.overlap = len(device)*[0]
     with cf.ThreadPoolExecutor(len(device)) as e:
         for i in range(len(device)):
             dev = device[i]
@@ -29,23 +32,72 @@ def runPipeline(image, pipeline, device=None):
             clattr.setMaxSliceCount(image)
             kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts,
                       'startIndex': startIndex, 'clattr': clattr, 'index': index, 'stacks': stacks}
-            e.submit(doFilter, **kwargs)
-            # doFilter(**kwargs) #debug
+            # e.submit(doFilter, **kwargs)
+            doFilter(**kwargs) #debug
 
     return stacks
 
 def run_MedianFilter(image, device=None):
+    """
+    It works!
+
+    :param image:
+    :param device:
+    :return:
+    """
 
     pipeline = [mf.MedianFilter()]
     return runPipeline(image, pipeline, device=device)
 
 def run_FFTFilter(image, FFTChoice='Forward', device=None):
 
+    """
+    It works!
+
+    :param image:
+    :param FFTChoice:
+    :param device:
+    :return:
+    """
+
     pipeline = [fft.FFTFilter(FFTChoice=FFTChoice)]
     return runPipeline(image, pipeline, device=device)
 
 def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, device=None):
+
+    """
+    It works!
+
+    :param image:
+    :param spatialRadius:
+    :param rangeRadius:
+    :param device:
+    :return:
+    """
+
     pipeline = [bf.BilateralFilter(spatialRadius=spatialRadius, rangeRadius=rangeRadius)]
+    return runPipeline(image, pipeline, device=device)
+
+def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, device=None):
+    """
+    NOT WORKING
+
+    """
+    pipeline = [mskf.MaskFilter(maskChoice=maskChoice, mask=mask, L=L)]
+    return runPipeline(image, pipeline, device=device)
+
+def run_MMFilterDil(image, mask='StructuredElementL', L=3, device=None):
+
+    """
+    It works!
+
+    :param image:
+    :param mask:
+    :param L:
+    :param device:
+    :return:
+    """
+    pipeline = [mmdil.MMFilterDil(mask=mask,L=L)]
     return runPipeline(image, pipeline, device=device)
 
 def doFilter(image, pipeline, attr, startIndex, clattr, index, stacks):
@@ -142,6 +194,7 @@ def getNextRange(image, startIndex, range, sliceCount):
     return startIndex
 
 
+# tests
 def test_median():
     image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
     image = helpers.scale_to_uint8(image)[:10]
@@ -172,6 +225,24 @@ def test_bilateral():
     #     print stack.stack
     tifffile.imsave('/home/hparks/Desktop/bilateral.tif', stacks[0].stack)
 
+def test_mask():
+    image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
+    image = helpers.scale_to_uint8(image)[:10]
+
+    stacks = run_MaskFilter(image, mask='Diagonal10x10x4')
+    # for stack in stacks:
+    #     print stack.stack
+    tifffile.imsave('/home/hparks/Desktop/maskfilter.tif', stacks[0].stack)
+
+def test_mmdil():
+    image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
+    image = helpers.scale_to_uint8(image)[:10]
+
+    stacks = run_MMFilterDil(image, mask='StructuredElementL')
+    # for stack in stacks:
+    #     print stack.stack
+    tifffile.imsave('/home/hparks/Desktop/mmdil.tif', stacks[0].stack)
+
 if __name__ == '__main__':
     import tifffile
-    test_bilateral()
+    test_mmdil()

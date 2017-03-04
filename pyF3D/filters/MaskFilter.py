@@ -55,10 +55,9 @@ class MaskFilter:
 
     def runFilter(self):
 
-        # probably will need to change this - use filteringattributes method
-        mask = self.atts.maskImages[0]
+        mask = self.atts.getMaskImages(self.mask, self.L)[0]
 
-        if self.atts.width*self.atts.height*self.atts.slices != mask.shape[0]*mask.shape[1].mask.shape[2]:
+        if self.atts.width*self.atts.height*self.atts.slices != np.product(mask.shape):
             print "Mask dimensions not equal to original image's"
             return False
 
