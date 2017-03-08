@@ -3,6 +3,7 @@ import pkg_resources as pkg
 import pyopencl as cl
 import time
 from pyF3D import helpers
+import re
 
 class MMFilterDil:
 
@@ -13,13 +14,18 @@ class MMFilterDil:
         self.name = "MMFilterDil"
         self.mask = mask
         self.L = L
-        self.maskImages = []
 
         self.clattr = None
         self.atts = None
 
     def toJSONString(self):
-        pass
+        result = "{ \"Name\" : \"" + self.getName() + "\" , "
+        mask = {"maskImage" : self.mask}
+        if self.mask == 'StructuredElementL':
+            mask["maskLen"] = "{}".format(int(self.L))
+
+        result += "\"Mask\" : " + "{}".format(mask) + " }"
+        return result
 
     def getName(self):
         return "MMFilterDil"
@@ -34,12 +40,20 @@ class MMFilterDil:
         return info
 
     def overlapAmount(self):
-        # return number of slices in mask - how to determine this?
 
-        # for the 10x10x4 diagonal case for testing
-        return 10
+        if self.mask in self.allowedMasks:
+            if self.mask.startswith('StructuredElement'):
+                return self.L
+            else:
+                matches = re.findall("\d{1,2}", self.mask)
+                return int(matches[-1])
+        else:
+            pass
+            # figure out what to do with custom masks
+
 
     def loadKernel(self):
+
 
         try:
             filename = "MMdil3D.cl"
@@ -49,6 +63,7 @@ class MMFilterDil:
 
         self.kernel = cl.Kernel(self.program, "MMdil3DFilterInit")
         self.kernel2 = cl.Kernel(self.program, "MMdil3DFilter")
+
         return True
 
     def runKernel(self, maskImages, overlapAmount):

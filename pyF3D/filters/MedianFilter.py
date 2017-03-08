@@ -32,15 +32,24 @@ class MedianFilter:
 
     def loadKernel(self):
         # median_comperror = ""
+
+        print self.clattr.device, "1"
+
         try:
             filename = "MedianFilter.cl"
+            print self.clattr.device, "2"
+
             program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
+            print self.clattr.device, "3"
         except Exception as e:
             raise e
+
 
             # other stuff to log errors
 
         self.kernel = cl.Kernel(program, "MedianFilter")
+        print self.clattr.device, "4"
+
         return True
 
     def runFilter(self):

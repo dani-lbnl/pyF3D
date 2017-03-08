@@ -72,6 +72,7 @@ class MMFilterEro:
         localSize = [0, 0]
         self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height, 1])
 
+
         for i in range(len(maskImages)):
             mask = maskImages[i]
             size = [0, 0, 0]
@@ -83,6 +84,7 @@ class MMFilterEro:
             startOffset = 0
             endOffset = 0
 
+
             if self.atts.overlap[self.index] > 0:
                 startOffset = int(self.atts.overlap[self.index] / 2)
                 endOffset = int(self.atts.overlap[self.index] / 2)
@@ -92,8 +94,12 @@ class MMFilterEro:
             if self.atts.sliceEnd >= 0:
                 endOffset = 0
 
+
+
             if self.clattr.outputTmpBuffer is None:
                 print "clattr.outputTmpBuffer is None!!"
+
+
 
             if i == 0:
                 self.kernel.set_args(self.clattr.inputBuffer, self.clattr.outputTmpBuffer,
@@ -117,6 +123,7 @@ class MMFilterEro:
                                            globalSize, localSize)
             except Exception:
                 return False
+
 
             structElem.release()
 
@@ -144,30 +151,9 @@ class MMFilterEro:
     def releaseKernel(self):
         if self.kernel: del(self.kernel)
         if self.kernel2: del(self.kernel2)
+        return True
 
     def setAttributes(self, CLAttributes, atts, index):
             self.clattr = CLAttributes
             self.atts = atts
             self.index = index
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

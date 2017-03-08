@@ -20,7 +20,7 @@ class ClAttributes(object):
         self.globalMemSize = int(min(self.device.max_mem_alloc_size * 0.5, sys.maxsize >> 1))
         # self.globalMemSize = int(min(self.device.max_mem_alloc_size * 0.5, sys.maxsize >> 1))
         if 'CPU' in self.device.name:
-            self.globalMemSize = int(min(self.globalMemSize, 10*1024*1024))
+            self.globalMemSize = int(min(self.globalMemSize, 10*1024*1024*8))
 
         self.maxSliceCount = 0
 
@@ -49,10 +49,10 @@ class ClAttributes(object):
             localSize[1] = min(int(np.sqrt(self.device.max_work_group_size)), 16)
             globalSize[1] = self.roundUp(localSize[1], sizes[1])
 
-        if 'CPU' in name:
-            for i in range(dimensions):
-                globalSize[i] = localSize[i]
-                localSize[i] = 1
+        # if 'CPU' in name:
+        #     for i in range(dimensions):
+        #         globalSize[i] = localSize[i]
+        #         localSize[i] = 1
 
         return True
 
@@ -117,7 +117,7 @@ class ClAttributes(object):
         startIndex = 0 if startRange==0 else overlap
         length = endRange - startRange
         # output = np.empty((length,atts.height, atts.width)).astype(np.uint8)
-        output = np.empty((length + 2*startIndex)*atts.width*atts.height).astype(np.uint8)
+        output = np.empty((length + startIndex)*atts.width*atts.height).astype(np.uint8)
         cl.enqueue_copy(self.queue, output, self.outputBuffer)
         output = output.reshape((startIndex+length), atts.height, atts.width)
         output = output[startIndex:startIndex+length]
@@ -127,7 +127,10 @@ class ClAttributes(object):
         return output
 
     def swapBuffers(self):
-        pass
+
+        tmpBuffer = self.inputBuffer
+        self.inputBuffer = self.outputBuffer
+        self.outputBuffer = tmpBuffer
 
     def convertToFloatBuffer(self, buffer):
         pass
@@ -142,6 +145,13 @@ def create_cl_attributes():
     queue = cl.CommandQueue(context, device)
 
     return context, device, queue
+
+def list_all_cl_devices():
+    devices = []
+    for item in cl.get_platforms():
+        for device in item.get_devices():
+            devices.append(device)
+    return devices
 
 
 
