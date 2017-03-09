@@ -6,10 +6,7 @@ def test_median():
     devices = ClAttributes.list_all_cl_devices()
 
 
-    # image = run_MedianFilter(image, device=devices)
-    image = run_MedianFilter(image)
-    # for stack in stacks:
-    #     print stack.stack
+    image = run_MedianFilter(image, device=devices)
     tifffile.imsave('/home/hparks/Desktop/median.tif', image)
 
 def test_fft():
@@ -108,5 +105,5 @@ if __name__ == '__main__':
     import os
     os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 
-    # test_median()
-    test_pipeline()
+    test_median()
+    # test_pipeline()

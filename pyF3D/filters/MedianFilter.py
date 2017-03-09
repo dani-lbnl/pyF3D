@@ -36,7 +36,7 @@ class MedianFilter:
         print self.clattr.device, "1"
 
         try:
-            filename = "MedianFilter.cl"
+            filename = "OpenCL/MedianFilter.cl"
             print self.clattr.device, "2"
 
             program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()

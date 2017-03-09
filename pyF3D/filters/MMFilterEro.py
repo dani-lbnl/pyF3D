@@ -53,7 +53,7 @@ class MMFilterEro:
     def loadKernel(self):
 
         try:
-            filename = "MMero3D.cl"
+            filename = "OpenCL/MMero3D.cl"
             self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
         except Exception:
             return False
