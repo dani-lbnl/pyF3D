@@ -20,6 +20,9 @@ class BilateralFilter:
         result += "\"spatialRadius\" : \"" + str(self.spatialRadius) + "\" , "
         result += "\"rangeRadius\" : \"" + str(self.rangeRadius) + "\" }"
 
+    def clone(self):
+        return BilateralFilter(spatialRadius=self.spatialRadius, rangeRadius=self.rangeRadius)
+
     def setSpatialRadius(self, sRadius):
         try:
             sRadius = int(sRadius)
@@ -129,12 +132,6 @@ class BilateralFilter:
         # write results
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
         self.clattr.queue.finish()
-        return True
-
-    def releaseKernel(self):
-        if self.spatialKernel: del(self.spatialKernel)
-        if self.rangeKernel: del(self.rangeKernel)
-        if self.kernel: del(self.kernel)
         return True
 
     def setAttributes(self, CLAttributes, atts, index):

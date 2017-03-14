@@ -29,6 +29,9 @@ class MMFilterOpe:
         result += "\"Mask\" : " + "{}".format(mask) + " }"
         return result
 
+    def clone(self):
+        return MMFilterOpe(mask=self.mask, L=self.L)
+
     def getInfo(self):
         info = helpers.FilterInfo()
         info.name = self.getName()
@@ -91,11 +94,6 @@ class MMFilterOpe:
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
         filter_time = time.time() - filter_time
 
-        return True
-
-    def releaseKernel(self):
-        if self.dilation: del (self.dilation)
-        if self.erosion: del (self.erosion)
         return True
 
     def setAttributes(self, CLAttributes, atts, index):

@@ -32,6 +32,9 @@ class MaskFilter:
         result += "\"Mask\" : " + "{}".format(mask) + " }"
         return result
 
+    def clone(self):
+        return MaskFilter(maskChoice=self.maskChoice, mask=self.mask, L=self.L)
+
     def getName(self):
         return "MaskFilter"
 
@@ -87,12 +90,6 @@ class MaskFilter:
 
         filter_time = time.time() - filter_time
 
-        return True
-
-    def releaseKernel(self):
-
-        if self.maskBuffer: del(self.maskBuffer)
-        if self.kernel: del(self.kernel)
         return True
 
     def setAttributes(self, CLAttributes, atts, index):

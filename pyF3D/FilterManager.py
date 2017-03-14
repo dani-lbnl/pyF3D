@@ -20,150 +20,330 @@ import threading
 
 startIndex = 0
 
-def run_f3d(image, pipeline, device=None):
-    stacks = runPipeline(image, pipeline, device=device)
+def run_f3d(image, pipeline, platform=None):
+    """
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    pipeline: list
+        series of functions to be performed on image
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        Filtered 3D object
+    """
+
+    stacks = runPipeline(image, pipeline, platform=platform)
     return reconstruct_final_image(stacks)
 
-def runPipeline(image, pipeline, device=None):
+def runPipeline(image, pipeline, platform=None):
+    """
 
-    device, context, queue = setup_cl_prereqs(device=device)
+    Performs filters contained in pipeline on input image. Creates one thread per OpenCL platform
+
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    pipeline: list
+        series of functions to be performed on image
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    list
+        portions of filtered data. Must be sorted.
+    """
+
     stacks = []
+    platform = check_if_valid_platform(platform)
 
-    # at this point we have a list of devices, contexts, and queues
     atts = FilterAttributes.FilteringAttributes()
-    atts.overlap = len(device)*[0]
-    with cf.ThreadPoolExecutor(len(device)) as e:
-        for i in range(len(device)):
-            dev = device[i]
-            ctx = context[i]
-            q = queue[i]
+    atts.overlap = [0]*len(platform)
+    with cf.ThreadPoolExecutor(len(platform)) as e:
+        for i in range(len(platform)):
+            print pipeline
             index = i
-            clattr = ClAttributes.ClAttributes(ctx, dev, q, None, None, None)
-            clattr.setMaxSliceCount(image)
-            kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'clattr': clattr,
+            kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': platform[i],
                       'index': index, 'stacks': stacks}
             e.submit(doFilter, **kwargs)
             # doFilter(**kwargs) #debug
 
-    # with cf.ThreadPoolExecutor(len(device)) as e:
-    #     for i in range(len(device)):
-    #         if i == 0:
-    #             dev = device[i]
-    #             ctx = context[i]
-    #             q = queue[i]
-    #             index = i
-    #             clattr = ClAttributes.ClAttributes(ctx, dev, q, None, None, None)
-    #             clattr.setMaxSliceCount(image)
-    #             kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'clattr': clattr,
-    #                       'index': index, 'stacks': stacks}
-    #             e.submit(doFilter, **kwargs)
-    #         else:
-    #             e.submit(doNothing)
-
     return stacks
 
-# def doNothing():
-#     while True:
-#         print 'nothing'
-#         time.sleep(1)
+def doFilter(image, pipeline, attr, platform, index, stacks):
 
-def run_MedianFilter(image, device=None):
+    global startIndex
+
+    device = platform.get_devices()[0]
+    device, context, queue = setup_cl_prereqs(device)
+    clattr = ClAttributes.ClAttributes(context, device, queue, None, None, None)
+    clattr.setMaxSliceCount(image)
+
+
+    start = startIndex
+    maxOverlap = 0
+    for filter in pipeline:
+        maxOverlap = max(maxOverlap, filter.getInfo().overlapZ)
+
+    maxSliceCount = clattr.maxSliceCount
+    clattr.initializeData(image, attr, maxOverlap, maxSliceCount)
+
+    for filter in pipeline:
+        if filter.getInfo().useTempBuffer:
+            clattr.outputTmpBuffer = cl.Buffer(clattr.context, cl.mem_flags.READ_WRITE, clattr.inputBuffer.size)
+            break
+    stackRange = [0, 0]
+    while True:
+
+        if start >= image.shape[0]:
+            break
+        start = getNextRange(image, stackRange, maxSliceCount)
+        attr.sliceStart = stackRange[0]
+        attr.sliceEnd = stackRange[1]
+        clattr.loadNextData(image, attr, stackRange[0], stackRange[1], maxOverlap)
+        maxSliceCount = stackRange[1] - stackRange[0]
+        attr.overlap[index] = maxOverlap
+
+        pipelineTime = 0
+        for i in range(len(pipeline)):
+
+            filter = pipeline[i].clone()
+            filter.setAttributes(clattr, attr, index)
+
+            if not filter.loadKernel():
+                raise Exception
+
+            filterTime = time.time()
+
+            if not filter.runFilter():
+                raise Exception
+
+            filterTime = time.time() - filterTime
+            pipelineTime += filterTime
+
+            if i < len(pipeline) - 1:
+                clattr.swapBuffers()
+
+        result = clattr.writeNextData(attr, stackRange[0], stackRange[1], maxOverlap)
+        addResultStack(stacks, stackRange[0], stackRange[1], result, clattr.device.name, pipelineTime)
+
+
+    clattr.inputBuffer.release()
+    clattr.outputBuffer.release()
+    if clattr.outputTmpBuffer is not None:
+        clattr.outputTmpBuffer.release()
+
+
+    startIndex = 0
+    return stacks
+
+def run_MedianFilter(image, platform=None):
     """
-    It works!
+    Performs median filter (radius = 3) on image
 
-    :param image:
-    :param device:
-    :return:
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        3D image after median filtering
     """
 
     pipeline = [mf.MedianFilter()]
-    stacks = runPipeline(image, pipeline, device=device)
+    stacks = runPipeline(image, pipeline, platform=platform)
     return reconstruct_final_image(stacks)
 
 
-def run_FFTFilter(image, FFTChoice='Forward', device=None):
-
+def run_FFTFilter(image, FFTChoice='Forward', platform=None):
     """
-    It works!
+    Performs FFT filter on image
 
-    :param image:
-    :param FFTChoice:
-    :param device:
-    :return:
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    FFTChoice: str, optional
+        Either 'Forward' or 'Inverse'
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        3D image after FFT filtering
     """
 
     pipeline = [fft.FFTFilter(FFTChoice=FFTChoice)]
-    return runPipeline(image, pipeline, device=device)
+    return runPipeline(image, pipeline, platform=platform)
 
-def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, device=None):
-
+def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, platform=None):
     """
-    It works!
+    Performs bilateral filter on image
 
-    :param image:
-    :param spatialRadius:
-    :param rangeRadius:
-    :param device:
-    :return:
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    spatialRadius: int
+        Specifies spatial radius
+    rangeRadius: int
+        Specifies range radius
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        3D image after bilateral filtering
     """
+
 
     pipeline = [bf.BilateralFilter(spatialRadius=spatialRadius, rangeRadius=rangeRadius)]
-    return runPipeline(image, pipeline, device=device)
+    return runPipeline(image, pipeline, platform=platform)
 
-def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, device=None):
+def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, platform=None):
+
     """
     NOT WORKING
 
     """
     pipeline = [mskf.MaskFilter(maskChoice=maskChoice, mask=mask, L=L)]
-    return runPipeline(image, pipeline, device=device)
+    return runPipeline(image, pipeline, platform=platform)
 
-def run_MMFilterDil(image, mask='StructuredElementL', L=3, device=None):
-
+def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
     """
-    It works!
+    Performs dilation filter on image
 
-    :param image:
-    :param mask:
-    :param L:
-    :param device:
-    :return:
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    mask: {str, ndarray}
+        Must be one of the following string values:
+
+        'StructuredElementL'
+        ''Diagonal3x3x3'
+        ''Diagonal10x10x4'
+        ''Diagonal10x10x10'
+
+        Can also be ndarray that will be used directly as a mask
+    L: int
+        Radius for 'StructuredElementL'
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        3D image after dilation filtering
     """
+
     pipeline = [mmdil.MMFilterDil(mask=mask,L=L)]
-    return run_f3d(image, pipeline, device=device)
+    return run_f3d(image, pipeline, platform=platform)
 
-def run_MMFilterEro(image, mask="StructuredElementL", L=3, device=None):
+def run_MMFilterEro(image, mask="StructuredElementL", L=3, platform=None):
     """
-    It works!
+    Performs erosion filter on image
 
-    :param image:
-    :param mask:
-    :param L:
-    :param device:
-    :return:
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    mask: {str, ndarray}
+        Must be one of the following string values:
+
+        'StructuredElementL'
+        ''Diagonal3x3x3'
+        ''Diagonal10x10x4'
+        ''Diagonal10x10x10'
+
+        Can also be ndarray that will be used directly as a mask
+    L: int
+        Radius for 'StructuredElementL'
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        3D image after erosion filtering
     """
+
     pipeline = [mmero.MMFilterEro(mask=mask, L=L)]
-    return runPipeline(image, pipeline, device=device)
+    return runPipeline(image, pipeline, platform=platform)
 
-def run_MMFilterClo(image, mask='StructuredElementL', L=3, device=None):
-
+def run_MMFilterClo(image, mask='StructuredElementL', L=3, platform=None):
     """
-    It works!
+    Performs closing filter on image
 
-    :param image:
-    :param mask:
-    :param L:
-    :param device:
-    :return:
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    mask: {str, ndarray}
+        Must be one of the following string values:
+
+        'StructuredElementL'
+        ''Diagonal3x3x3'
+        ''Diagonal10x10x4'
+        ''Diagonal10x10x10'
+
+        Can also be ndarray that will be used directly as a mask
+    L: int
+        Radius for 'StructuredElementL'
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        3D image after closing filtering
     """
 
     pipeline = [mmclo.MMFilterClo(mask=mask, L=L)]
-    return runPipeline(image, pipeline, device=device)
+    return runPipeline(image, pipeline, platform=platform)
 
-def run_MMFilterOpe(image, mask='StructuredElementL', L=3, device=None):
+def run_MMFilterOpe(image, mask='StructuredElementL', L=3, platform=None):
+    """
+    Performs opening filter on image
+
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    mask: {str, ndarray}
+        Must be one of the following string values:
+
+        'StructuredElementL'
+        ''Diagonal3x3x3'
+        ''Diagonal10x10x4'
+        ''Diagonal10x10x10'
+
+        Can also be ndarray that will be used directly as a mask
+    L: int
+        Radius for 'StructuredElementL'
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
+
+    Returns
+    -------
+    ndarray
+        3D image after opening filtering
+    """
 
     pipeline = [mmope.MMFilterOpe(mask=mask, L=L)]
-    stacks = runPipeline(image, pipeline, device=device)
+    stacks = runPipeline(image, pipeline, platform=platform)
     return reconstruct_final_image(stacks)
 
 def reconstruct_final_image(stacks):
@@ -178,64 +358,6 @@ def reconstruct_final_image(stacks):
             image = np.append(image, stack.stack, axis=0)
 
         return image
-
-def doFilter(image, pipeline, attr, clattr, index, stacks):
-
-    global startIndex
-
-    start = startIndex
-    maxOverlap = 0
-    for filter in pipeline:
-        maxOverlap = max(maxOverlap, filter.getInfo().overlapZ)
-
-    maxSliceCount = clattr.maxSliceCount
-    clattr.initializeData(image, attr, maxOverlap, maxSliceCount)
-
-    for filter in pipeline:
-        if filter.getInfo().useTempBuffer:
-            clattr.outputTmpBuffer = cl.Buffer(clattr.context, cl.mem_flags.READ_WRITE, clattr.inputBuffer.size)
-            break
-
-    stackRange = [0, 0]
-    while True:
-        if start >= image.shape[0]:
-            break
-        start = getNextRange(image, stackRange, maxSliceCount)
-        attr.sliceStart = stackRange[0]
-        attr.sliceEnd = stackRange[1]
-        clattr.loadNextData(image, attr, stackRange[0], stackRange[1], maxOverlap)
-        maxSliceCount = stackRange[1] - stackRange[0]
-        attr.overlap[index] = maxOverlap
-
-        pipelineTime = 0
-        for i in range(len(pipeline)):
-            filter = pipeline[i]
-            filter.setAttributes(clattr, attr, index)
-            if not filter.loadKernel():
-                raise Exception
-
-            filterTime = time.time()
-
-            if not filter.runFilter():
-                raise Exception
-
-
-            filterTime = time.time() - filterTime
-            pipelineTime += filterTime
-
-            if i < len(pipeline) - 1:
-                clattr.swapBuffers()
-            filter.releaseKernel()
-        result = clattr.writeNextData(attr, stackRange[0], stackRange[1], maxOverlap)
-        addResultStack(stacks, stackRange[0], stackRange[1], result, clattr.device.name, pipelineTime)
-
-    clattr.inputBuffer.release()
-    clattr.outputBuffer.release()
-    if clattr.outputTmpBuffer is not None:
-        clattr.outputTmpBuffer.release()
-
-    startIndex = 0
-    return stacks
 
 load_lock = threading.Lock()
 def getNextRange(image, range, sliceCount):
@@ -264,24 +386,21 @@ def addResultStack(stacks, startRange, endRange, output, name, pipelineTime):
 
         stacks.append(sr)
 
+def check_if_valid_platform(platform=None):
+    if not platform:
+        platform = [cl.get_platforms()[0]]
+    if type(platform) is not list:
+        platform = [platform]
+
+    for item in platform:
+        if type(item) is not cl.Platform:
+            raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
+    return platform
+
+
 def setup_cl_prereqs(device=None):
-    try:
-        if not device:
-            context, device, queue = ClAttributes.create_cl_attributes()
-        if type(device) is not list:
-            device = [device]
-            context = [cl.Context(device)]
-            queue = [cl.CommandQueue(context[0], device[0])]
-        else:
-            context = []; queue = []
-            for i in range(len(device)):
-                context.append(cl.Context([device[i]]))
-                queue.append(cl.CommandQueue(context[i], device[i]))
-    except TypeError:
-        raise TypeError("\'device\' argument must be of type pyopencl.Device")
+    context = cl.Context([device])
+    queue = cl.CommandQueue(context, device)
 
     return device, context, queue
-
-
-# tests
 

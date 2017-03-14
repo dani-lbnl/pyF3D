@@ -27,6 +27,9 @@ class MMFilterDil:
         result += "\"Mask\" : " + "{}".format(mask) + " }"
         return result
 
+    def clone(self):
+        return MMFilterDil(mask=self.mask, L=self.L)
+
     def getName(self):
         return "MMFilterDil"
 
@@ -136,10 +139,6 @@ class MMFilterDil:
         filter_time = time.time() - filter_time
 
         return True
-
-    def releaseKernel(self):
-        if self.kernel: del(self.kernel)
-        if self.kernel2: del(self.kernel2)
 
 
     def setAttributes(self, CLAttributes, atts, index):

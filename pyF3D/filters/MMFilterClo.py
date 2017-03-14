@@ -29,6 +29,9 @@ class MMFilterClo:
         result += "\"Mask\" : " + "{}".format(mask) + " }"
         return result
 
+    def clone(self):
+        return MMFilterClo(mask=self.mask, L=self.L)
+
     def getInfo(self):
         info = helpers.FilterInfo()
         info.name = self.getName()
@@ -94,10 +97,6 @@ class MMFilterClo:
 
         return True
 
-    def releaseKernel(self):
-        if self.dilation: del(self.dilation)
-        if self.erosion: del(self.erosion)
-        return True
 
 
     def setAttributes(self, CLAttributes, atts, index):

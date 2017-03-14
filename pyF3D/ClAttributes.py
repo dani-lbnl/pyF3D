@@ -2,6 +2,7 @@ import pyopencl as cl
 import sys
 # from pipeline import msg
 import numpy as np
+import pkg_resources as pkg
 
 class ClAttributes(object):
 
@@ -146,12 +147,8 @@ def create_cl_attributes():
 
     return context, device, queue
 
-def list_all_cl_devices():
-    devices = []
-    for item in cl.get_platforms():
-        for device in item.get_devices():
-            devices.append(device)
-    return devices
+def list_all_cl_platforms():
+    return cl.get_platforms()
 
 
 

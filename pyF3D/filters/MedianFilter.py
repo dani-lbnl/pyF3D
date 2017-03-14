@@ -15,6 +15,9 @@ class MedianFilter:
         self.clattr = None
         self.atts = None #load attributes from RunnablePOCLFilter
 
+    def clone(self):
+        return MedianFilter()
+
     def toJSONString(self):
         result = "{ \"Name\" : \"" + self.getName() + "\", " + "\" }"
         return result
@@ -33,14 +36,11 @@ class MedianFilter:
     def loadKernel(self):
         # median_comperror = ""
 
-        print self.clattr.device, "1"
 
         try:
             filename = "OpenCL/MedianFilter.cl"
-            print self.clattr.device, "2"
 
             program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
-            print self.clattr.device, "3"
         except Exception as e:
             raise e
 
@@ -48,7 +48,6 @@ class MedianFilter:
             # other stuff to log errors
 
         self.kernel = cl.Kernel(program, "MedianFilter")
-        print self.clattr.device, "4"
 
         return True
 
@@ -87,13 +86,6 @@ class MedianFilter:
         self.clattr.queue.finish()
         return True
 
-    def releaseKernel(self):
-
-        # Does garbage collector correctly free resources?
-
-        if self.kernel:
-            del(self.kernel)
-        return True
 
 
     def setAttributes(self, CLAttributes, atts, index):

@@ -27,6 +27,9 @@ class MMFilterEro:
         result += "\"Mask\" : " + "{}".format(mask) + " }"
         return result
 
+    def clone(self):
+        return MMFilterEro(mask=self.mask, L=self.L)
+
     def getInfo(self):
         info = helpers.FilterInfo()
         info.name = self.getName()
@@ -148,10 +151,6 @@ class MMFilterEro:
 
         return True
 
-    def releaseKernel(self):
-        if self.kernel: del(self.kernel)
-        if self.kernel2: del(self.kernel2)
-        return True
 
     def setAttributes(self, CLAttributes, atts, index):
             self.clattr = CLAttributes

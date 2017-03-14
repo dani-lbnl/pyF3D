@@ -25,6 +25,9 @@ class FFTFilter:
         result += "\"fftChoice\" : \"" + str(self.selectedFFTChoice) +"\" , }"
         return result
 
+    def clone(self):
+        return FFTFilter(FFTChoice=self.selectedFFTChoice)
+
     def getInfo(self):
         info = helpers.FilterInfo()
         info.name = self.getName()
@@ -72,13 +75,7 @@ class FFTFilter:
         filter_time = time.time() - filter_time
         return True
 
-    def releaseKernel(self):
 
-        # Does garbage collector correctly free resources?
-
-        if self.kernel:
-            del (self.kernel)
-        return True
 
     def setAttributes(self, CLAttributes, atts, index):
         self.clattr = CLAttributes
