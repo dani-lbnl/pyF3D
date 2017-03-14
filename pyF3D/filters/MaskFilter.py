@@ -42,7 +42,6 @@ class MaskFilter:
         info = helpers.FilterInfo()
         info.name = self.getName()
         info.memtype = bytes
-        # info.memtype = POCLFilter.POCLFilter.Type.Byte
         info.overlapX = info.overlapY = info.overlapZ = 0
         return info
 
@@ -64,7 +63,6 @@ class MaskFilter:
             print "Mask dimensions not equal to original image's"
             return False
 
-        filter_time = time.time()
         globalSize = [0]
         localSize = [0]
 
@@ -88,7 +86,6 @@ class MaskFilter:
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
         self.clattr.queue.finish()
 
-        filter_time = time.time() - filter_time
 
         return True
 

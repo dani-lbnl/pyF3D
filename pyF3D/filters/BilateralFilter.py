@@ -71,12 +71,10 @@ class BilateralFilter:
         localSize = min(self.clattr.device.max_work_group_size, minWorkingGroup)
         globalSize = self.clattr.roundUp(localSize, bufferSize)*np.float32(0).nbytes
 
-        #might need to change size
         buffer = cl.Buffer(self.clattr.context, cl.mem_flags.READ_WRITE, size = globalSize)
         kernel = cl.Kernel(self.program, 'makeKernel')
         kernel.set_args(np.float32(radius), buffer, np.int32(bufferSize))
 
-        kernel_time = time.time()
         globalSize = [int(globalSize)]
         localSize = [int(localSize)]
 
@@ -92,10 +90,7 @@ class BilateralFilter:
         normalizeKernel = cl.Kernel(self.program, 'normalizeKernel')
         normalizeKernel.set_args(np.float32(total), buffer, np.int32(bufferSize))
         cl.enqueue_nd_range_kernel(self.clattr.queue, normalizeKernel, globalSize, localSize)
-        kernel_time = time.time() - kernel_time
 
-        del(kernel)
-        del(normalizeKernel)
 
         return buffer
 

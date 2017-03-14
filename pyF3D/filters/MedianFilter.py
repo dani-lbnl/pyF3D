@@ -11,9 +11,8 @@ class MedianFilter:
         self.name = 'MedianFilter'
         self.index = -1
 
-        # load clattr from RunnablePOCLFilter
         self.clattr = None
-        self.atts = None #load attributes from RunnablePOCLFilter
+        self.atts = None
 
     def clone(self):
         return MedianFilter()
@@ -26,7 +25,6 @@ class MedianFilter:
         info = helpers.FilterInfo()
         info.name = self.getName()
         info.memtype = bytes
-        # info.memtype = POCLFilter.POCLFilter.Type.Byte
         info.overlapX = info.overlapY = info.overlapZ = 0
         return info
 
@@ -34,9 +32,6 @@ class MedianFilter:
         return "MedianFilter"
 
     def loadKernel(self):
-        # median_comperror = ""
-
-
         try:
             filename = "OpenCL/MedianFilter.cl"
 
@@ -45,14 +40,11 @@ class MedianFilter:
             raise e
 
 
-            # other stuff to log errors
-
         self.kernel = cl.Kernel(program, "MedianFilter")
 
         return True
 
     def runFilter(self):
-        start_time = time.time()
 
         if self.atts.height == 1 and self.atts.slices == 1:
             mid = 1
@@ -65,11 +57,6 @@ class MedianFilter:
         self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height, 1])
 
         try:
-
-            # TODO: does loading happen here or in a clattr function?
-            # copy data to accelerator
-            # self.clattr.queue.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, )
-
             # set up parameters
             self.kernel.set_args(self.clattr.inputBuffer, self.clattr.outputBuffer, np.int32(self.atts.width),
                                            np.int32(self.atts.height), np.int32(self.clattr.maxSliceCount),

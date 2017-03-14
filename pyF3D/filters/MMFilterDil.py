@@ -38,7 +38,6 @@ class MMFilterDil:
         info.name = self.getName()
         info.memtype = bytes
         info.useTempBuffer = True
-        # info.memtype = POCLFilter.POCLFilter.Type.Byte
         info.overlapX = info.overlapY = info.overlapZ = self.overlapAmount()
         return info
 
@@ -52,7 +51,7 @@ class MMFilterDil:
                 return int(matches[-1])
         else:
             pass
-            # figure out what to do with custom masks
+            # TODO: figure out what to do with custom masks
 
 
     def loadKernel(self):
@@ -128,15 +127,10 @@ class MMFilterDil:
 
     def runFilter(self):
 
-        # TODO: check if mask is valid - probably needs similar machinery to self.overlapAmount
-
-        filter_time = time.time()
-
         maskImages = self.atts.getMaskImages(self.mask, self.L)
         self.runKernel(maskImages, self.overlapAmount())
 
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
-        filter_time = time.time() - filter_time
 
         return True
 

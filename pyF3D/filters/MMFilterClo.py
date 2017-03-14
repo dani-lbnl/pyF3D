@@ -37,7 +37,6 @@ class MMFilterClo:
         info.name = self.getName()
         info.memtype = bytes
         info.useTempBuffer = True
-        # info.memtype = POCLFilter.POCLFilter.Type.Byte
         info.overlapX = info.overlapY = info.overlapZ = self.overlapAmount()
         return info
 
@@ -51,7 +50,7 @@ class MMFilterClo:
                 return int(matches[-1])
         else:
             pass
-            # figure out what to do with custom masks
+            # TODO: figure out what to do with custom masks
 
     def getName(self):
         return "MMFilterClo"
@@ -79,8 +78,6 @@ class MMFilterClo:
                 print "ERROR: Structure element size is too large..."
                 return False
 
-        filter_time = time.time()
-
         if not self.dilation.runKernel(maskImages, self.overlapAmount()):
             return False
 
@@ -93,7 +90,6 @@ class MMFilterClo:
             return False
 
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
-        filter_time = time.time() - filter_time
 
         return True
 

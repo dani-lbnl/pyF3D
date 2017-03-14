@@ -33,7 +33,6 @@ class FFTFilter:
         info.name = self.getName()
         info.memtype = float
         info.useTempBuffer = True
-        # info.memtype = POCLFilter.POCLFilter.Type.Byte
         info.overlapX = info.overlapY = info.overlapZ = 0
         return info
 
@@ -53,15 +52,12 @@ class FFTFilter:
     def runFilter(self):
 
         direction = 1 if self.selectedFFTChoice == 'Forward' else -1
-        filter_time = time.time()
 
         globalSize = [0, 0]
         localSize = [0, 0]
         self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height, 1])
 
         try:
-            # loading data instead handled by CLAttributes function
-
             self.kernel.set_args(self.clattr.inputBuffer, self.clattr.outputBuffer, self.clattr.outputTmpBuffer,
                                  np.int32(direction), np.int32(self.atts.width), np.int32(self.atts.height),
                                  np.int32(self.clattr.maxSliceCount), np.int32(2))
@@ -72,7 +68,6 @@ class FFTFilter:
         # write results
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
         self.clattr.queue.finish()
-        filter_time = time.time() - filter_time
         return True
 
 
