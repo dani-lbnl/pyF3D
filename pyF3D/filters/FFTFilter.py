@@ -2,7 +2,7 @@ import numpy as np
 import pkg_resources as pkg
 import pyopencl as cl
 import time
-from pyF3D import helpers
+import pyF3D.FilterClasses as fc
 
 class FFTFilter:
 
@@ -29,7 +29,7 @@ class FFTFilter:
         return FFTFilter(FFTChoice=self.selectedFFTChoice)
 
     def getInfo(self):
-        info = helpers.FilterInfo()
+        info = fc.FilterInfo()
         info.name = self.getName()
         info.memtype = float
         info.useTempBuffer = True

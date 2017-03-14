@@ -1,8 +1,7 @@
 import numpy as np
 import pkg_resources as pkg
 import pyopencl as cl
-import time
-from pyF3D import helpers
+import pyF3D.FilterClasses as fc
 import re
 
 class MMFilterEro:
@@ -31,7 +30,7 @@ class MMFilterEro:
         return MMFilterEro(mask=self.mask, L=self.L)
 
     def getInfo(self):
-        info = helpers.FilterInfo()
+        info = fc.FilterInfo()
         info.name = self.getName()
         info.memtype = bytes
         info.overlapX = info.overlapY = info.overlapZ = self.overlapAmount()

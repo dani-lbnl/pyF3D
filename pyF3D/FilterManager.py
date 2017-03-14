@@ -1,4 +1,3 @@
-# import POCLFilter
 import pyopencl as cl
 import time
 
@@ -15,7 +14,7 @@ import filters.MMFilterDil as mmdil
 import filters.MMFilterEro as mmero
 import filters.MMFilterClo as mmclo
 import filters.MMFilterOpe as mmope
-import helpers
+import FilterClasses as fc
 import threading
 
 startIndex = 0
@@ -67,7 +66,6 @@ def runPipeline(image, pipeline, platform=None):
     atts.overlap = [0]*len(platform)
     with cf.ThreadPoolExecutor(len(platform)) as e:
         for i in range(len(platform)):
-            print pipeline
             index = i
             kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': platform[i],
                       'index': index, 'stacks': stacks}
@@ -377,7 +375,7 @@ result_lock = threading.Lock()
 def addResultStack(stacks, startRange, endRange, output, name, pipelineTime):
 
     with result_lock:
-        sr = helpers.StackRange()
+        sr = fc.StackRange()
         sr.startRange = startRange
         sr.endRange = endRange
         sr.stack = output
@@ -403,4 +401,17 @@ def setup_cl_prereqs(device=None):
     queue = cl.CommandQueue(context, device)
 
     return device, context, queue
+
+def scale_to_uint8(data):
+    """
+    Custom function to scale data to 8-bit uchar for F3D plugin
+    """
+    if type(data) is not np.ndarray:
+        data = np.array(data)
+
+    a = float(255)/(float(np.max(data)) - float(np.min(data)))
+    b = (float(255)*float(np.min(data)))/(float(np.min(data)) - float(np.max(data)))
+
+    data = a*data + b
+    return (data).astype(np.uint8)
 

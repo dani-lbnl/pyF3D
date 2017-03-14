@@ -1,4 +1,4 @@
 from filters import *
-from helpers import *
+from FilterClasses import *
 from FilterAttributes import *
 from FilterManager import *

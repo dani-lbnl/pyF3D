@@ -1,8 +1,7 @@
 import numpy as np
 import pkg_resources as pkg
 import pyopencl as cl
-import time
-from pyF3D import helpers
+import pyF3D.FilterClasses as fc
 import re
 
 class MMFilterDil:
@@ -34,7 +33,7 @@ class MMFilterDil:
         return "MMFilterDil"
 
     def getInfo(self):
-        info = helpers.FilterInfo()
+        info = fc.FilterInfo()
         info.name = self.getName()
         info.memtype = bytes
         info.useTempBuffer = True
