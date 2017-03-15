@@ -9,8 +9,7 @@ class MaskFilter:
                           'Diagonal10x10x10']
     maskChoices = ['mask3D']
 
-    def __init__(self, maskChoice='mask3D', mask='structuredElementL', L=3):
-        # Note: ignore 'L' parameter is mask choice is not 'structuredElementL'
+    def __init__(self, maskChoice='mask3D', mask='StructuredElementL', L=3):
 
         self.name = 'MaskFilter'
 
@@ -82,8 +81,6 @@ class MaskFilter:
                                  np.int32(self.atts.width), np.int32(self.atts.height),
                                  np.int32(self.clattr.maxSliceCount + self.atts.overlap[self.index]))
 
-            # TODO: worry about copying data here? as is done in JOCL filters?
-
             cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel, globalSize, localSize)
 
         except Exception as e:
@@ -92,7 +89,6 @@ class MaskFilter:
             # write results
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
         self.clattr.queue.finish()
-
 
         return True
 

@@ -70,8 +70,8 @@ def runPipeline(image, pipeline, platform=None):
             index = i
             kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': platform[i],
                       'index': index, 'stacks': stacks}
-            e.submit(doFilter, **kwargs)
-            # doFilter(**kwargs) #debug
+            # e.submit(doFilter, **kwargs)
+            doFilter(**kwargs) #debug
 
     return stacks
 
@@ -217,8 +217,27 @@ def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, platform=None):
 def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, platform=None):
 
     """
-    NOT WORKING
+    Performs mask filter on image
 
+    Parameters
+    ----------
+    image: ndarray
+        3D image data
+    maskChoice: str
+        type of mask - can only be 'mask3D' currently
+    mask: {sr, ndarray}
+        Mask must be same shape as image. Can be one of the following string values:
+
+        'StructuredElementL'
+        ''Diagonal3x3x3'
+        ''Diagonal10x10x4'
+        ''Diagonal10x10x10'
+
+        Can also be ndarray that will be used directly as a mask
+    L: int
+        Radius for 'StructuredElementL'
+    platform: pyopencl.Platform, optional
+        Platform on which calculations are performed
     """
     pipeline = [mskf.MaskFilter(maskChoice=maskChoice, mask=mask, L=L)]
     stacks = runPipeline(image, pipeline, platform=platform)

@@ -135,8 +135,8 @@ class FilteringAttributes:
 
         # stack is np.ndarray - needs defined dimensions, so how does StructuredElementL work?
 
-        if not self.isValidStructElement(stack):
-            return None
+        # if not self.isValidStructElement(stack):
+        #     return None
         size = [0, 0, 0]
         size[2] = stack.shape[0]
         size[1] = stack.shape[1]

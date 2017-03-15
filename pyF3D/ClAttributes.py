@@ -36,8 +36,6 @@ class ClAttributes(object):
                 sizes) != 3:
             return False
 
-        name = self.device.name
-
         # set working group sizes
         dimensions = len(globalSize)
         if dimensions == 1:
@@ -50,10 +48,6 @@ class ClAttributes(object):
             localSize[1] = min(int(np.sqrt(self.device.max_work_group_size)), 16)
             globalSize[1] = self.roundUp(localSize[1], sizes[1])
 
-        # if 'CPU' in name:
-        #     for i in range(dimensions):
-        #         globalSize[i] = localSize[i]
-        #         localSize[i] = 1
 
         return True
 
@@ -62,12 +56,9 @@ class ClAttributes(object):
         dim = image.shape
         maxSliceCount = int(self.globalMemSize/(dim[1]*dim[2]*8))
 
-        # TODO: where does maxOverlap value come from?
-        # maxSliceCount -= maxOverlap
 
         if maxSliceCount > dim[0]:
             maxSliceCount = dim[0]
-            maxOverlap = 0
 
         self.maxSliceCount = maxSliceCount
 
@@ -88,11 +79,9 @@ class ClAttributes(object):
         atts.sliceStart = -1
         atts.sliceEnd = -1
 
-        # could these ever be anything else?
         atts.channels = 1 # for greyscale
 
         if maxSliceCount <= 0:
-            # msg.showMessage('Image + StructuredElement will not fit on GPU memory')
             return False
 
         totalSize = (atts.width * atts.height * (maxSliceCount + (overlapAmount * 2)))*8
@@ -117,14 +106,10 @@ class ClAttributes(object):
     def writeNextData(self, atts, startRange, endRange, overlap):
         startIndex = 0 if startRange==0 else overlap
         length = endRange - startRange
-        # output = np.empty((length,atts.height, atts.width)).astype(np.uint8)
         output = np.empty((length + startIndex)*atts.width*atts.height).astype(np.uint8)
         cl.enqueue_copy(self.queue, output, self.outputBuffer)
         output = output.reshape((startIndex+length), atts.height, atts.width)
         output = output[startIndex:startIndex+length]
-        # output = output.transpose()
-        # image = np.append(image, output, axis=0)
-        # return image
         return output
 
     def swapBuffers(self):
@@ -132,12 +117,6 @@ class ClAttributes(object):
         tmpBuffer = self.inputBuffer
         self.inputBuffer = self.outputBuffer
         self.outputBuffer = tmpBuffer
-
-    def convertToFloatBuffer(self, buffer):
-        pass
-
-    def convertToByteBuffer(self, buffer):
-        pass
 
 def create_cl_attributes():
 

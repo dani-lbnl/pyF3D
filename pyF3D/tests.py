@@ -24,14 +24,17 @@ def test_bilateral():
 
 def test_mask():
     image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
-    image = scale_to_uint8(image)[:10]
+    image = scale_to_uint8(image)[:100]
 
-    im = run_MaskFilter(image, mask='Diagonal10x10x4')
+    mask = np.zeros((100,352,275))
+
+    im = run_MaskFilter(image, mask=mask)
     tifffile.imsave('/home/hparks/Desktop/maskfilter.tif', im)
 
 def test_mmdil():
     image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
     image = scale_to_uint8(image)
+
 
     im = run_MMFilterDil(image, mask='StructuredElementL')
     tifffile.imsave('/home/hparks/Desktop/mmdil.tif', im)
@@ -79,4 +82,4 @@ if __name__ == '__main__':
 
     # test_median()
     # test_pipeline()
-    test_mmdil()
+    test_mask()
