@@ -133,8 +133,6 @@ class FilteringAttributes:
 
     def getStructElement(self, context, queue, stack, overrideSize=-1):
 
-        # stack is np.ndarray - needs defined dimensions, so how does StructuredElementL work?
-
         # if not self.isValidStructElement(stack):
         #     return None
         size = [0, 0, 0]

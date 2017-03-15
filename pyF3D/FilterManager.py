@@ -21,14 +21,21 @@ startIndex = 0
 
 def run_f3d(image, pipeline, platform=None):
     """
+    Perform F3D filtering on image with specified pipeline
+
     Parameters
     ----------
     image: ndarray
         3D image data
     pipeline: list
         series of functions to be performed on image
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
 
     Returns
     -------
@@ -51,8 +58,14 @@ def runPipeline(image, pipeline, platform=None):
         3D image data
     pipeline: list
         series of functions to be performed on image
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
 
     Returns
     -------
@@ -68,21 +81,27 @@ def runPipeline(image, pipeline, platform=None):
     with cf.ThreadPoolExecutor(len(platform)) as e:
         for i in range(len(platform)):
             index = i
-            kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': platform[i],
-                      'index': index, 'stacks': stacks}
-            # e.submit(doFilter, **kwargs)
-            doFilter(**kwargs) #debug
+            if type(platform) is list:
+                p = platform[i]
+                maxSliceCount = None
+            else:
+                p = platform.keys()[i]
+                maxSliceCount = platform.values()[i]
+            kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': p,
+                      'sliceCount': maxSliceCount, 'index': index, 'stacks': stacks}
+            e.submit(doFilter, **kwargs)
+            # doFilter(**kwargs) #debug
 
     return stacks
 
-def doFilter(image, pipeline, attr, platform, index, stacks):
+def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
 
     global startIndex
 
     device = platform.get_devices()[0]
     device, context, queue = setup_cl_prereqs(device)
     clattr = ClAttributes.ClAttributes(context, device, queue, None, None, None)
-    clattr.setMaxSliceCount(image)
+    clattr.setMaxSliceCount(image, sliceCount)
 
 
     start = startIndex
@@ -108,7 +127,6 @@ def doFilter(image, pipeline, attr, platform, index, stacks):
         clattr.loadNextData(image, attr, stackRange[0], stackRange[1], maxOverlap)
         maxSliceCount = stackRange[1] - stackRange[0]
         attr.overlap[index] = maxOverlap
-
         pipelineTime = 0
         for i in range(len(pipeline)):
 
@@ -150,8 +168,14 @@ def run_MedianFilter(image, platform=None):
     ----------
     image: ndarray
         3D image data
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
 
     Returns
     -------
@@ -174,8 +198,13 @@ def run_FFTFilter(image, FFTChoice='Forward', platform=None):
         3D image data
     FFTChoice: str, optional
         Either 'Forward' or 'Inverse'
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
 
     Returns
     -------
@@ -195,12 +224,18 @@ def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, platform=None):
     ----------
     image: ndarray
         3D image data
-    spatialRadius: int
+    spatialRadius: int, optional
         Specifies spatial radius
-    rangeRadius: int
+    rangeRadius: int, optional
         Specifies range radius
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
 
     Returns
     -------
@@ -223,9 +258,9 @@ def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, p
     ----------
     image: ndarray
         3D image data
-    maskChoice: str
+    maskChoice: str, optional
         type of mask - can only be 'mask3D' currently
-    mask: {sr, ndarray}
+    mask: {sr, ndarray}, optional
         Mask must be same shape as image. Can be one of the following string values:
 
         'StructuredElementL'
@@ -234,10 +269,16 @@ def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, p
         ''Diagonal10x10x10'
 
         Can also be ndarray that will be used directly as a mask
-    L: int
+    L: int, optional
         Radius for 'StructuredElementL'
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
     """
     pipeline = [mskf.MaskFilter(maskChoice=maskChoice, mask=mask, L=L)]
     stacks = runPipeline(image, pipeline, platform=platform)
@@ -252,7 +293,7 @@ def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
     ----------
     image: ndarray
         3D image data
-    mask: {str, ndarray}
+    mask: {str, ndarray}, optional
         Must be one of the following string values:
 
         'StructuredElementL'
@@ -261,10 +302,16 @@ def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
         ''Diagonal10x10x10'
 
         Can also be ndarray that will be used directly as a mask
-    L: int
+    L: int, optional
         Radius for 'StructuredElementL'
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
 
     Returns
     -------
@@ -285,7 +332,7 @@ def run_MMFilterEro(image, mask="StructuredElementL", L=3, platform=None):
     ----------
     image: ndarray
         3D image data
-    mask: {str, ndarray}
+    mask: {str, ndarray}, optional
         Must be one of the following string values:
 
         'StructuredElementL'
@@ -294,10 +341,16 @@ def run_MMFilterEro(image, mask="StructuredElementL", L=3, platform=None):
         ''Diagonal10x10x10'
 
         Can also be ndarray that will be used directly as a mask
-    L: int
+    L: int, optional
         Radius for 'StructuredElementL'
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
 
     Returns
     -------
@@ -318,7 +371,7 @@ def run_MMFilterClo(image, mask='StructuredElementL', L=3, platform=None):
     ----------
     image: ndarray
         3D image data
-    mask: {str, ndarray}
+    mask: {str, ndarray}, optional
         Must be one of the following string values:
 
         'StructuredElementL'
@@ -327,10 +380,16 @@ def run_MMFilterClo(image, mask='StructuredElementL', L=3, platform=None):
         ''Diagonal10x10x10'
 
         Can also be ndarray that will be used directly as a mask
-    L: int
+    L: int, optional
         Radius for 'StructuredElementL'
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
 
     Returns
     -------
@@ -351,7 +410,7 @@ def run_MMFilterOpe(image, mask='StructuredElementL', L=3, platform=None):
     ----------
     image: ndarray
         3D image data
-    mask: {str, ndarray}
+    mask: {str, ndarray}, optional
         Must be one of the following string values:
 
         'StructuredElementL'
@@ -360,10 +419,16 @@ def run_MMFilterOpe(image, mask='StructuredElementL', L=3, platform=None):
         ''Diagonal10x10x10'
 
         Can also be ndarray that will be used directly as a mask
-    L: int
+    L: int, optional
         Radius for 'StructuredElementL'
-    platform: pyopencl.Platform, optional
-        Platform on which calculations are performed
+    platform: {pyopencl.Platform, list, dict}, optional
+        Platforms on which calculations are performed. Can either specify:
+
+        1). A pyopencl.Platform object, for all calculations on single object
+        2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
+        3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
+            slices to be placed on the platform at any time
+
 
     Returns
     -------
@@ -379,9 +444,6 @@ def reconstruct_final_image(stacks):
 
         stacks = sorted(stacks)
         image = stacks[0].stack
-
-        # for stack in stacks:
-            # print stack.endRange - stack.startRange
 
         for stack in stacks[1:]:
             image = np.append(image, stack.stack, axis=0)
@@ -418,12 +480,21 @@ def addResultStack(stacks, startRange, endRange, output, name, pipelineTime):
 def check_if_valid_platform(platform=None):
     if not platform:
         platform = [cl.get_platforms()[0]]
-    if type(platform) is not list:
+    if type(platform) is not list and type(platform) is not dict:
         platform = [platform]
 
-    for item in platform:
-        if type(item) is not cl.Platform:
-            raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
+    if type(platform) is list:
+        for item in platform:
+            if type(item) is not cl.Platform:
+                raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
+    else: # platform is dict
+        for key, val in platform.iteritems():
+            if type(key) is not cl.Platform:
+                raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
+            try:
+                platform[key] = int(val)
+            except ValueError:
+                raise TypeError('Values must be convertable to int')
     return platform
 
 

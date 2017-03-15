@@ -51,7 +51,7 @@ class ClAttributes(object):
 
         return True
 
-    def setMaxSliceCount(self, image):
+    def setMaxSliceCount(self, image, maxSlice=None):
 
         dim = image.shape
         maxSliceCount = int(self.globalMemSize/(dim[1]*dim[2]*8))
@@ -59,8 +59,10 @@ class ClAttributes(object):
 
         if maxSliceCount > dim[0]:
             maxSliceCount = dim[0]
-
-        self.maxSliceCount = maxSliceCount
+        if not maxSlice or maxSlice>maxSliceCount:
+            self.maxSliceCount = maxSliceCount
+        else:
+            self.maxSliceCount = maxSlice
 
     def initializeData(self, image, atts, overlapAmount, maxSliceCount):
         """

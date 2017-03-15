@@ -4,8 +4,11 @@ def test_median():
     image = tifffile.imread('/media/winHDD/hparks/rec20160525_165348_holland_polar_bear_hair_1.tif')
     image = scale_to_uint8(image)
     platforms = ClAttributes.list_all_cl_platforms()
+    d = {}
+    for p in platforms:
+        d[p] = 100
 
-    image = run_MedianFilter(image, platforms)
+    image = run_MedianFilter(image, d)
     tifffile.imsave('/home/hparks/Desktop/median.tif', image)
 
 def test_fft():
@@ -80,6 +83,6 @@ if __name__ == '__main__':
     import os
     os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 
-    # test_median()
+    test_median()
     # test_pipeline()
-    test_mask()
+    # test_mask()

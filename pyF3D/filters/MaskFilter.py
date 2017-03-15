@@ -62,7 +62,6 @@ class MaskFilter:
         return True
 
     def runFilter(self):
-
         mask = self.atts.getMaskImages(self.mask, self.L)[0]
 
         if self.atts.width*self.atts.height*self.atts.slices != np.product(mask.shape):
