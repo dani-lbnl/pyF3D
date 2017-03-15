@@ -17,9 +17,18 @@ class MMFilterOpe:
         self.clattr = None
         self.atts = None
 
+        if type(self.mask) is str:
+            if self.mask not in self.allowedMasks: raise TypeError('Mask does not match any of allowed choices')
+        else:
+            try:
+                self.mask = np.array(self.mask).astype(np.uint8)
+            except ValueError:
+                raise TypeError('Mask must be able to be converted to np.uint8')
+
+
     def toJSONString(self):
         result = "{ \"Name\" : \"" + self.getName() + "\" , "
-        mask = {"maskImage": self.mask}
+        mask = {"maskImage" : self.mask if self.mask in self.allowedMasks else 'customMask'}
         if self.mask == 'StructuredElementL':
             mask["maskLen"] = "{}".format(int(self.L))
 

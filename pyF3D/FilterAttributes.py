@@ -22,7 +22,10 @@ class FilteringAttributes:
 
     def getMaskImages(self, maskImage, maskL):
         images = []
-        self.parseImage(maskImage, maskL, images)
+        if type(maskImage) is str:
+            self.parseImage(maskImage, maskL, images)
+        else:
+            images.append(maskImage)
         return images
 
     def parseImage(self, inputString, maskL, images):
@@ -44,8 +47,8 @@ class FilteringAttributes:
             if images is not None:
                 images.append(self.buildDiagonalImage(x, y, z))
         else:
-            # TODO: fill in for custom masks
-            pass
+            raise TypeError('Mask type not identifiable')
+
 
 
     def buildStructElementArray(self, L):

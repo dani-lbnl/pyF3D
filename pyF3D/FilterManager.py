@@ -36,6 +36,7 @@ def run_f3d(image, pipeline, platform=None):
         Filtered 3D object
     """
 
+    image = scale_to_uint8(image)
     stacks = runPipeline(image, pipeline, platform=platform)
     return reconstruct_final_image(stacks)
 
@@ -183,7 +184,8 @@ def run_FFTFilter(image, FFTChoice='Forward', platform=None):
     """
 
     pipeline = [fft.FFTFilter(FFTChoice=FFTChoice)]
-    return runPipeline(image, pipeline, platform=platform)
+    stacks = runPipeline(image, pipeline, platform=platform)
+    return reconstruct_final_image(stacks)
 
 def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, platform=None):
     """
@@ -208,7 +210,9 @@ def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, platform=None):
 
 
     pipeline = [bf.BilateralFilter(spatialRadius=spatialRadius, rangeRadius=rangeRadius)]
-    return runPipeline(image, pipeline, platform=platform)
+    stacks = runPipeline(image, pipeline, platform=platform)
+    return reconstruct_final_image(stacks)
+
 
 def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, platform=None):
 
@@ -217,7 +221,9 @@ def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, p
 
     """
     pipeline = [mskf.MaskFilter(maskChoice=maskChoice, mask=mask, L=L)]
-    return runPipeline(image, pipeline, platform=platform)
+    stacks = runPipeline(image, pipeline, platform=platform)
+    return reconstruct_final_image(stacks)
+
 
 def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
     """
@@ -248,7 +254,9 @@ def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
     """
 
     pipeline = [mmdil.MMFilterDil(mask=mask,L=L)]
-    return run_f3d(image, pipeline, platform=platform)
+    stacks = run_f3d(image, pipeline, platform=platform)
+    return reconstruct_final_image(stacks)
+
 
 def run_MMFilterEro(image, mask="StructuredElementL", L=3, platform=None):
     """
@@ -279,7 +287,9 @@ def run_MMFilterEro(image, mask="StructuredElementL", L=3, platform=None):
     """
 
     pipeline = [mmero.MMFilterEro(mask=mask, L=L)]
-    return runPipeline(image, pipeline, platform=platform)
+    stacks = runPipeline(image, pipeline, platform=platform)
+    return reconstruct_final_image(stacks)
+
 
 def run_MMFilterClo(image, mask='StructuredElementL', L=3, platform=None):
     """
@@ -310,7 +320,9 @@ def run_MMFilterClo(image, mask='StructuredElementL', L=3, platform=None):
     """
 
     pipeline = [mmclo.MMFilterClo(mask=mask, L=L)]
-    return runPipeline(image, pipeline, platform=platform)
+    stacks = runPipeline(image, pipeline, platform=platform)
+    return reconstruct_final_image(stacks)
+
 
 def run_MMFilterOpe(image, mask='StructuredElementL', L=3, platform=None):
     """

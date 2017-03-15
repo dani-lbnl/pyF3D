@@ -65,7 +65,8 @@ def test_pipeline():
 
     pipeline = [mf.MedianFilter(), mmdil.MMFilterDil(), bf.BilateralFilter(), mf.MedianFilter()]
     platforms = ClAttributes.list_all_cl_platforms()
-    im = run_f3d(image, pipeline, platforms)
+    # im = run_f3d(image, pipeline, platforms)
+    im = run_f3d(image, pipeline)
 
     tifffile.imsave('/home/hparks/Desktop/pipeline.tif', im)
 
@@ -76,5 +77,6 @@ if __name__ == '__main__':
     import os
     os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 
-    test_median()
+    # test_median()
     # test_pipeline()
+    test_mmdil()
