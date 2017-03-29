@@ -32,10 +32,11 @@ def run_f3d(image, pipeline, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
     Returns
     -------
@@ -61,10 +62,11 @@ def runPipeline(image, pipeline, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
 
     Returns
@@ -171,10 +173,11 @@ def run_MedianFilter(image, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
 
     Returns
@@ -201,10 +204,11 @@ def run_FFTFilter(image, FFTChoice='Forward', platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
     Returns
     -------
@@ -231,10 +235,11 @@ def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
 
     Returns
@@ -274,10 +279,11 @@ def run_MaskFilter(image, maskChoice='mask3D', mask='StructuredElementL', L=3, p
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
     """
     pipeline = [mskf.MaskFilter(maskChoice=maskChoice, mask=mask, L=L)]
@@ -307,10 +313,11 @@ def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
 
     Returns
@@ -346,10 +353,11 @@ def run_MMFilterEro(image, mask="StructuredElementL", L=3, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
 
     Returns
@@ -385,10 +393,11 @@ def run_MMFilterClo(image, mask='StructuredElementL', L=3, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
 
     Returns
@@ -424,10 +433,11 @@ def run_MMFilterOpe(image, mask='StructuredElementL', L=3, platform=None):
     platform: {pyopencl.Platform, list, dict}, optional
         Platforms on which calculations are performed. Can either specify:
 
-        1). A pyopencl.Platform object, for all calculations on single object
+        1). A pyopencl.Platform object, for all calculations on single platform
         2). A list of pyopencl.Platform objects, for calculations to be performed in parallel
         3). A dictionary of pyopencl.Platform and int key/value pairs. The int values specify the maximum number of
-            slices to be placed on the platform at any time
+            slices to be placed on the platform at any time (ex.: {platform1: 100} will assign a maximum of 100 slices to
+            platform1)
 
 
     Returns
@@ -506,7 +516,17 @@ def setup_cl_prereqs(device=None):
 
 def scale_to_uint8(data):
     """
-    Custom function to scale data to 8-bit uchar for F3D plugin
+    Scales input array to np.uint8 type
+
+    Parameters
+    ----------
+    data: np.ndarray
+        Input data. If not type np.ndarray, must be able to convert to np.ndarray
+
+    Returns
+    -------
+    np.ndarray
+        data as type np.uint8 (8-bit)
     """
     if type(data) is not np.ndarray:
         data = np.array(data)

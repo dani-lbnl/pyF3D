@@ -1,0 +1,21 @@
+package:
+  name: pyf3d
+  version: '1.0.0'
+
+source:
+  #git_url: https://github.com/holdymoldy/pyF3D
+  path: ./
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - pyopencl
+    - numpy
+    - concurrent
+
+about:
+  summary: 'Python wrapper for F3D filtering.'
