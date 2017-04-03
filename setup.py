@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='pyF3D',
+    name='pyf3d',
     version='1.0.0',
     description='Filtering for micro-tomography data',
     long_description='Read from README file',
@@ -17,5 +17,5 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7'
     ],
-    install_requires=['numpy', 'pyopencl']
+    # install_requires=['numpy', 'pyopencl']
 )
