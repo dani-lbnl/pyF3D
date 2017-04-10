@@ -19,7 +19,7 @@ setup(
     license='BSD',
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'License :: Something',
+        'License :: OSI Approved :: BSD License',
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7'
