@@ -74,7 +74,8 @@ def runPipeline(image, pipeline, platform=None):
     list
         portions of filtered data. Must be sorted.
     """
-
+    global startIndex
+    startIndex = 0
     stacks = []
     platform = check_if_valid_platform(platform)
 
@@ -106,7 +107,6 @@ def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
     clattr.setMaxSliceCount(image, sliceCount)
 
 
-    start = startIndex
     maxOverlap = 0
     for filter in pipeline:
         maxOverlap = max(maxOverlap, filter.getInfo().overlapZ)
@@ -121,13 +121,12 @@ def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
     stackRange = [0, 0]
     while True:
 
-        if start >= image.shape[0]:
+        if startIndex >= image.shape[0]:
             break
-        start = getNextRange(image, stackRange, maxSliceCount)
+        getNextRange(image, stackRange, maxSliceCount, maxOverlap)
         attr.sliceStart = stackRange[0]
         attr.sliceEnd = stackRange[1]
         clattr.loadNextData(image, attr, stackRange[0], stackRange[1], maxOverlap)
-        maxSliceCount = stackRange[1] - stackRange[0]
         attr.overlap[index] = maxOverlap
         pipelineTime = 0
         for i in range(len(pipeline)):
@@ -158,8 +157,6 @@ def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
     if clattr.outputTmpBuffer is not None:
         clattr.outputTmpBuffer.release()
 
-
-    startIndex = 0
     return stacks
 
 def run_MedianFilter(image, platform=None):
@@ -326,8 +323,8 @@ def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
         3D image after dilation filtering
     """
 
-    pipeline = [mmdil.MMFilterDil(mask=mask,L=L)]
-    stacks = run_f3d(image, pipeline, platform=platform)
+    pipeline = [mmdil.MMFilterDil(mask=mask, L=L)]
+    stacks = runPipeline(image, pipeline, platform=platform)
     return reconstruct_final_image(stacks)
 
 
@@ -451,7 +448,6 @@ def run_MMFilterOpe(image, mask='StructuredElementL', L=3, platform=None):
     return reconstruct_final_image(stacks)
 
 def reconstruct_final_image(stacks):
-
         stacks = sorted(stacks)
         image = stacks[0].stack
 
@@ -461,14 +457,14 @@ def reconstruct_final_image(stacks):
         return image
 
 load_lock = threading.Lock()
-def getNextRange(image, range, sliceCount):
+def getNextRange(image, range, sliceCount, overlap):
 
     global startIndex
 
     with load_lock:
         endIndex = image.shape[0]
-        range[0] = startIndex
-        range[1] = startIndex + sliceCount
+        range[0] = max(0, startIndex)
+        range[1] = max(0, startIndex - overlap) + sliceCount - overlap
         if range[1] >= endIndex:
             range[1] = endIndex
         startIndex = range[1]

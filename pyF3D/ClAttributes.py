@@ -86,7 +86,7 @@ class ClAttributes(object):
         if maxSliceCount <= 0:
             return False
 
-        totalSize = (atts.width * atts.height * (maxSliceCount + (overlapAmount * 2)))*8
+        totalSize = (atts.width * atts.height * maxSliceCount)*8
 
         self.inputBuffer = cl.Buffer(self.context, cl.mem_flags.READ_WRITE, totalSize)
         self.outputBuffer = cl.Buffer(self.context, cl.mem_flags.READ_WRITE, totalSize)
@@ -101,16 +101,15 @@ class ClAttributes(object):
         im = image[minIndex:maxIndex, :, :]
         dim = im.shape
         im = np.reshape(im, dim[0]*dim[1]*dim[2])
-
         cl.enqueue_copy(self.queue, self.inputBuffer, im)
         return True
 
     def writeNextData(self, atts, startRange, endRange, overlap):
         startIndex = 0 if startRange==0 else overlap
         length = endRange - startRange
-        output = np.empty((length + startIndex)*atts.width*atts.height).astype(np.uint8)
+        output = np.empty((length + startIndex+overlap)*atts.width*atts.height).astype(np.uint8)
         cl.enqueue_copy(self.queue, output, self.outputBuffer)
-        output = output.reshape((startIndex+length), atts.height, atts.width)
+        output = output.reshape((startIndex+length+overlap), atts.height, atts.width)
         output = output[startIndex:startIndex+length]
         return output
 

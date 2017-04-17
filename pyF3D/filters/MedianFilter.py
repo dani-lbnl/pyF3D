@@ -23,7 +23,7 @@ class MedianFilter:
         info = fc.FilterInfo()
         info.name = self.getName()
         info.memtype = bytes
-        info.overlapX = info.overlapY = info.overlapZ = 0
+        info.overlapX = info.overlapY = info.overlapZ = 4
         return info
 
     def getName(self):
