@@ -10,6 +10,9 @@ class FFTFilter:
 
     def __init__(self, FFTChoice='Forward'):
 
+        import warnings
+        warnings.warn("FFT Filter not yet implemented", RuntimeWarning)
+
         if FFTChoice not in self.FFTChoice:
             raise ValueError("'FFTChoice' parameter must be either 'Forward' or 'Inverse'")
 
@@ -53,17 +56,40 @@ class FFTFilter:
 
         direction = 1 if self.selectedFFTChoice == 'Forward' else -1
 
+
+        # FFT in x direction
         globalSize = [0, 0]
         localSize = [0, 0]
-        self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height, 1])
-
+        self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.height, self.atts.slices, 1])
         try:
             self.kernel.set_args(self.clattr.inputBuffer, self.clattr.outputBuffer, self.clattr.outputTmpBuffer,
                                  np.int32(direction), np.int32(self.atts.width), np.int32(self.atts.height),
-                                 np.int32(self.clattr.maxSliceCount), np.int32(2))
+                                 np.int32(self.clattr.maxSliceCount), np.int32(0))
             cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel, globalSize, localSize)
+            # cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
         except Exception as e:
             raise e
+
+        # FFT in y direction
+        # self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.slices, 1])
+        # try:
+        #     self.kernel.set_args(self.clattr.inputBuffer, self.clattr.outputBuffer, self.clattr.outputTmpBuffer,
+        #                          np.int32(direction), np.int32(self.atts.width), np.int32(self.atts.height),
+        #                          np.int32(self.clattr.maxSliceCount), np.int32(1))
+        #     cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel, globalSize, localSize)
+        #     # cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
+        # except Exception as e:
+        #     raise e
+
+        # # FFT in z direction
+        # self.clattr.computeWorkingGroupSize(localSize, globalSize, [self.atts.width, self.atts.height, 1])
+        # try:
+        #     self.kernel.set_args(self.clattr.inputBuffer, self.clattr.outputBuffer, self.clattr.outputTmpBuffer,
+        #                          np.int32(direction), np.int32(self.atts.width), np.int32(self.atts.height),
+        #                          np.int32(self.clattr.maxSliceCount), np.int32(2))
+        #     cl.enqueue_nd_range_kernel(self.clattr.queue, self.kernel, globalSize, localSize)
+        # except Exception as e:
+        #     raise e
 
         # write results
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
