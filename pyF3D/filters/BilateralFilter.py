@@ -5,6 +5,17 @@ import pyF3D.FilterClasses as fc
 
 class BilateralFilter:
 
+    """
+    Class for a bilateral filter of specified spatial radius and specified range radius.
+
+    Parameters
+    ----------
+    spatialRadius: int, optional
+        Specifies spatial radius
+    rangeRadius: int, optional
+        Specifies range radius
+    """
+
     def __init__(self, spatialRadius=3, rangeRadius=30):
 
         self.name = 'BilateralFilter'

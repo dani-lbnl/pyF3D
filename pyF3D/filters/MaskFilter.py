@@ -5,6 +5,26 @@ import pyF3D.FilterClasses as fc
 
 class MaskFilter:
 
+    """
+    Class for applying mask to an image
+
+    Parameters
+    ----------
+    maskChoice: str, optional
+        type of mask - can only be 'mask3D' currently
+    mask: {sr, ndarray}, optional
+        Mask must be same shape as image. Can be one of the following string values:
+
+        'StructuredElementL'
+        ''Diagonal3x3x3'
+        ''Diagonal10x10x4'
+        ''Diagonal10x10x10'
+
+        Can also be ndarray that will be used directly as a mask
+    L: int, optional
+        Radius for 'StructuredElementL' mask
+    """
+
     allowedMasks = ['StructuredElementL', 'Diagonal3x3x3', 'Diagonal10x10x4',
                           'Diagonal10x10x10']
     maskChoices = ['mask3D']

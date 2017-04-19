@@ -6,6 +6,15 @@ import pyF3D.FilterClasses as fc
 
 class FFTFilter:
 
+    """
+    Class for a FFT filter of specified direction
+
+    Parameters
+    ----------
+    FFTChoice: str, optional
+        Must be either 'Foward' or 'Inverse', to specify the direction of the operation
+    """
+
     FFTChoice = ['Forward', 'Inverse']
 
     def __init__(self, FFTChoice='Forward'):

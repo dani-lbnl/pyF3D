@@ -6,6 +6,24 @@ import re
 
 class MMFilterDil:
 
+    """
+    Class for a dilation filter with specified mask
+
+    Parameters
+    ----------
+    mask: {str, ndarray}, optional
+        Must be one of the following string values:
+
+        'StructuredElementL'
+        ''Diagonal3x3x3'
+        ''Diagonal10x10x4'
+        ''Diagonal10x10x10'
+
+        Can also be ndarray that will be used directly as a mask
+    L: int, optional
+        Radius for 'StructuredElementL'
+    """
+
     allowedMasks = ['StructuredElementL', 'Diagonal3x3x3', 'Diagonal10x10x4',
                           'Diagonal10x10x10']
 

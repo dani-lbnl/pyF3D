@@ -4,6 +4,9 @@ import pyopencl as cl
 import pyF3D.FilterClasses as fc
 
 class MedianFilter:
+    """
+    Class for a 3D median filter of radius 3 (no parameters)
+    """
 
     def __init__(self):
         self.name = 'MedianFilter'
