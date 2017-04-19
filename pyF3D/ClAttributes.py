@@ -120,6 +120,15 @@ class ClAttributes(object):
         self.outputBuffer = tmpBuffer
 
 def create_cl_attributes():
+    """
+    Creates a OpenCL context, along with its corresponding  device and  commandqueue
+
+    Returns
+    -------
+    context: pyopencl.Context
+    device: pyopencl.Device
+    queue: pyopencl.CommandQueue
+    """
 
     context = cl.create_some_context()
     device = context.devices[0]
@@ -128,6 +137,14 @@ def create_cl_attributes():
     return context, device, queue
 
 def list_all_cl_platforms():
+    """
+    Wrapper for pyopencl function which lists all available OpenCL platforms
+
+    Returns
+    -------
+    list of pyopencl.Platform objects
+    """
+
     return cl.get_platforms()
 
 

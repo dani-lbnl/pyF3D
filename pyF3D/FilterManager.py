@@ -524,12 +524,15 @@ def scale_to_uint8(data):
     np.ndarray
         data as type np.uint8 (8-bit)
     """
-    if type(data) is not np.ndarray:
-        data = np.array(data)
+    if type(data) is np.ndarray and data.dtype is np.dtype('uint8'):
+        return data
+    else:
+        if type(data) is not np.ndarray:
+            data = np.array(data)
 
-    a = float(255)/(float(np.max(data)) - float(np.min(data)))
-    b = (float(255)*float(np.min(data)))/(float(np.min(data)) - float(np.max(data)))
+        a = float(255)/(float(np.max(data)) - float(np.min(data)))
+        b = (float(255)*float(np.min(data)))/(float(np.min(data)) - float(np.max(data)))
 
-    data = a*data + b
-    return (data).astype(np.uint8)
+        data = a*data + b
+        return (data).astype(np.uint8)
 
