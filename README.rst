@@ -22,17 +22,18 @@ Installation
 Linux
 +++++
 
-Install pyF3D with:
+You may install pyF3D with either conda or pip:
+
+.. code-block:: bash
+
+  conda install -c als832 pyf3d
+
+Or:
 
 .. code-block:: bash
 
   pip install pyF3D
 
-You may also use conda to install pyF3D:
-
-.. code-block:: bash
-
-  conda install -c als832 pyf3d
 
 Copyright Notice
 ----------------
