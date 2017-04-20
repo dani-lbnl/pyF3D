@@ -19,7 +19,7 @@ structuring elements.
 Installation
 ------------
 
-pyF3D requires _PyOpenCL to run. See this_ link for installation instructions.
+pyF3D requires PyOpenCL_ to run. See this_ link for installation instructions.
 
 .. _PyOpenCL: https://mathema.tician.de/software/pyopencl/
 
