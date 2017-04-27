@@ -81,6 +81,7 @@ def runPipeline(image, pipeline, platform=None):
 
     atts = FilterAttributes.FilteringAttributes()
     atts.overlap = [0]*len(platform)
+    jobs = []
     with cf.ThreadPoolExecutor(len(platform)) as e:
         for i in range(len(platform)):
             index = i
@@ -92,9 +93,10 @@ def runPipeline(image, pipeline, platform=None):
                 maxSliceCount = platform.values()[i]
             kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': p,
                       'sliceCount': maxSliceCount, 'index': index, 'stacks': stacks}
-            e.submit(doFilter, **kwargs)
-            # doFilter(**kwargs) #debug
+            jobs.append(e.submit(doFilter, **kwargs))
 
+    for job in jobs:
+        job.result()
     return stacks
 
 def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
