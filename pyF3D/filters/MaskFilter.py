@@ -73,7 +73,7 @@ class MaskFilter:
 
     def loadKernel(self):
         try:
-            filename = "OpenCL/Mask3D.cl"
+            filename = "../OpenCL/Mask3D.cl"
             self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
         except Exception:
             return False

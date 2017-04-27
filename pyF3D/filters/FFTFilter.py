@@ -53,7 +53,7 @@ class FFTFilter:
 
     def loadKernel(self):
         try:
-            filename = "OpenCL/FFTFilter.cl"
+            filename = "../OpenCL/FFTFilter.cl"
             program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
         except Exception as e:
             raise e

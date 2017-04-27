@@ -94,7 +94,8 @@ def runPipeline(image, pipeline, platform=None):
             kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': p,
                       'sliceCount': maxSliceCount, 'index': index, 'stacks': stacks}
             jobs.append(e.submit(doFilter, **kwargs))
-
+            # e.submit(doFilter, **kwargs)
+            # doFilter(**kwargs) #debug
     for job in jobs:
         job.result()
     return stacks

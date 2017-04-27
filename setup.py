@@ -10,13 +10,14 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='pyf3d',
-    version='1.0.1',
+    version='1.0.3',
     description='Filtering for micro-tomography data',
     long_description=long_description,
     url='https://github.com/holdymoldy/pyF3D',
     author='Holden Parks',
     author_email='hparks@lbl.gov',
     packages=find_packages(),
+    package_data={'pyF3D':['OpenCL/*']},
     license='BSD',
     classifiers=[
         'Development Status :: 3 - Alpha',

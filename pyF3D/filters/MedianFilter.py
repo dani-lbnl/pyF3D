@@ -34,7 +34,7 @@ class MedianFilter:
 
     def loadKernel(self):
         try:
-            filename = "OpenCL/MedianFilter.cl"
+            filename = "../OpenCL/MedianFilter.cl"
 
             program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
         except Exception as e:

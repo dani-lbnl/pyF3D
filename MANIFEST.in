@@ -1,0 +1,4 @@
+include README.rst
+recursive-include pyF3D/OpenCL *
+include License.txt
+include Legal.txt
