@@ -117,7 +117,8 @@ class FilteringAttributes:
         return images
 
     def buildDiagonalImage(self, width, height, slices):
-        stack = np.zeros((int(slices), int(height), int(width))).astype(np.uint8)
+        #stack = np.zeros((int(slices), int(height), int(width))).astype(np.uint8)
+        stack = np.zeros((int(height), int(width), int(slices))).astype(np.uint8)
         for i in range(int(slices)):
             prc = stack[i]
             endIndex = int(width) if int(width)<int(height) else int(height)
@@ -128,6 +129,7 @@ class FilteringAttributes:
     # test if mask is valid
     def isValidStructElement(self, image):
         if image.shape[0]*image.shape[1]*image.shape[2] >= self.MAX_STRUCTELEM_SIZE:
+            print("Structure Element is not valid!")
             return False
         return True
 

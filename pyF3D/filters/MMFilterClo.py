@@ -1,8 +1,8 @@
 import numpy as np
 import pyopencl as cl
 import pyF3D.FilterClasses as fc
-import MMFilterEro as mmero
-import MMFilterDil as mmdil
+from . import MMFilterEro as mmero
+from . import MMFilterDil as mmdil
 import re
 
 class MMFilterClo:
@@ -65,7 +65,6 @@ class MMFilterClo:
         return info
 
     def overlapAmount(self):
-
         if self.mask in self.allowedMasks:
             if self.mask.startswith('StructuredElement'):
                 return self.L
@@ -74,6 +73,8 @@ class MMFilterClo:
                 return int(matches[-1])
         else:
             return self.mask.shape[0]
+
+
 
     def getName(self):
         return "MMFilterClo"
@@ -96,12 +97,14 @@ class MMFilterClo:
     def runFilter(self):
 
         maskImages = self.atts.getMaskImages(self.mask, self.L)
+        #print(maskImages[0])
         for mask in maskImages:
             if not self.atts.isValidStructElement(mask):
+                print("ERROR: Structure element size is too large...")
                 return False
 
-
         if not self.dilation.runKernel(maskImages, self.overlapAmount()):
+            print("Problem running dilation!")
             return False
 
         # swap results to put output back to input
@@ -110,13 +113,12 @@ class MMFilterClo:
         self.clattr.outputBuffer = tmpBuffer
 
         if not self.erosion.runKernel(maskImages, self.overlapAmount()):
+            print("Problem running erosion!")
             return False
 
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
 
         return True
-
-
 
     def setAttributes(self, CLAttributes, atts, index):
             self.clattr = CLAttributes

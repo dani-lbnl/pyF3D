@@ -108,7 +108,7 @@ class BilateralFilter:
     def loadKernel(self):
         try:
             filename = "../OpenCL/BilateralFiltering.cl"
-            self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
+            self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename).decode()).build()
         except Exception:
             return  False
 

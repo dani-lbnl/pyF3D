@@ -1,7 +1,8 @@
+import numpy as np
 import pyopencl as cl
 import pyF3D.FilterClasses as fc
-import MMFilterEro as mmero
-import MMFilterDil as mmdil
+from . import MMFilterEro as mmero
+from . import MMFilterDil as mmdil
 import re
 
 class MMFilterOpe:
@@ -43,7 +44,6 @@ class MMFilterOpe:
             except ValueError:
                 raise TypeError('Mask must be able to be converted to np.uint8')
 
-
     def toJSONString(self):
         result = "{ \"Name\" : \"" + self.getName() + "\" , "
         mask = {"maskImage" : self.mask if self.mask in self.allowedMasks else 'customMask'}
@@ -60,6 +60,7 @@ class MMFilterOpe:
         info = fc.FilterInfo()
         info.name = self.getName()
         info.memtype = bytes
+        info.useTempBuffer = True        
         info.overlapX = info.overlapY = info.overlapZ = self.overlapAmount()
         return info
 
@@ -72,7 +73,8 @@ class MMFilterOpe:
                 matches = re.findall("\d{1,2}", self.mask)
                 return int(matches[-1])
         else:
-            pass
+            return self.mask.shape[0]
+            #pass
             # TODO: figure out what to do with custom masks
 
     def getName(self):
@@ -96,12 +98,14 @@ class MMFilterOpe:
     def runFilter(self):
 
         maskImages = self.atts.getMaskImages(self.mask, self.L)
+        #print(maskImages[0])
         for mask in maskImages:
             if not self.atts.isValidStructElement(mask):
-                print "ERROR: Structure element size is too large..."
+                print("ERROR: Structure element size is too large...")
                 return False
 
         if not self.erosion.runKernel(maskImages, self.overlapAmount()):
+            print("Problem running erosion!")
             return False
 
         # swap results to put output back to input
@@ -110,6 +114,7 @@ class MMFilterOpe:
         self.clattr.outputBuffer = tmpBuffer
 
         if not self.dilation.runKernel(maskImages, self.overlapAmount()):
+            print("Problem running dilation!")
             return False
 
         cl.enqueue_copy(self.clattr.queue, self.clattr.inputBuffer, self.clattr.outputBuffer)
@@ -119,4 +124,5 @@ class MMFilterOpe:
     def setAttributes(self, CLAttributes, atts, index):
             self.clattr = CLAttributes
             self.atts = atts
+            self.index = index
             self.index = index

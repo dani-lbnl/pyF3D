@@ -4,17 +4,17 @@ import time
 import concurrent.futures as cf
 import numpy as np
 
-import ClAttributes
-import FilterAttributes
-import filters.MedianFilter as mf
-import filters.FFTFilter as fft
-import filters.BilateralFilter as bf
-import filters.MaskFilter as mskf
-import filters.MMFilterDil as mmdil
-import filters.MMFilterEro as mmero
-import filters.MMFilterClo as mmclo
-import filters.MMFilterOpe as mmope
-import FilterClasses as fc
+from . import ClAttributes
+from . import FilterAttributes
+from .filters import MedianFilter as mf
+from .filters import FFTFilter as fft
+from .filters import BilateralFilter as bf
+from .filters import MaskFilter as mskf
+from .filters import MMFilterDil as mmdil
+from .filters import MMFilterEro as mmero
+from .filters import MMFilterClo as mmclo
+from .filters import MMFilterOpe as mmope
+from . import FilterClasses as fc
 import threading
 
 startIndex = 0
@@ -89,8 +89,8 @@ def runPipeline(image, pipeline, platform=None):
                 p = platform[i]
                 maxSliceCount = None
             else:
-                p = platform.keys()[i]
-                maxSliceCount = platform.values()[i]
+                p = list(platform.keys())[i]
+                maxSliceCount = list(platform.values())[i]
             kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': p,
                       'sliceCount': maxSliceCount, 'index': index, 'stacks': stacks}
             jobs.append(e.submit(doFilter, **kwargs))
@@ -125,6 +125,7 @@ def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
     while True:
 
         if startIndex >= image.shape[0]:
+        #if startIndex >= image.shape[2]:
             break
         getNextRange(image, stackRange, maxSliceCount, maxOverlap)
         attr.sliceStart = stackRange[0]
@@ -466,6 +467,7 @@ def getNextRange(image, range, sliceCount, overlap):
 
     with load_lock:
         endIndex = image.shape[0]
+        #endIndex = image.shape[2]
         range[0] = max(0, startIndex)
         range[1] = max(0, startIndex - overlap) + sliceCount - overlap
         if range[1] >= endIndex:
@@ -497,13 +499,22 @@ def check_if_valid_platform(platform=None):
             if type(item) is not cl.Platform:
                 raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
     else: # platform is dict
-        for key, val in platform.iteritems():
-            if type(key) is not cl.Platform:
-                raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
-            try:
-                platform[key] = int(val)
-            except ValueError:
-                raise TypeError('Values must be convertable to int')
+        try:
+            for key, val in platform.iteritems():
+                if type(key) is not cl.Platform:
+                    raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
+                try:
+                    platform[key] = int(val)
+                except ValueError:
+                    raise TypeError('Values must be convertable to int')
+        except:
+            for key, val in platform.items():
+                if type(key) is not cl.Platform:
+                    raise TypeError("\'platform\' argument must be of type pyopencl.Platform")
+                try:
+                    platform[key] = int(val)
+                except ValueError:
+                    raise TypeError('Values must be convertable to int')
     return platform
 
 

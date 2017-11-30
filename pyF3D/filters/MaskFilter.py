@@ -74,7 +74,7 @@ class MaskFilter:
     def loadKernel(self):
         try:
             filename = "../OpenCL/Mask3D.cl"
-            self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
+            self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename).decode()).build()
         except Exception:
             return False
 
@@ -85,7 +85,7 @@ class MaskFilter:
         mask = self.atts.getMaskImages(self.mask, self.L)[0]
 
         if self.atts.width*self.atts.height*self.atts.slices != np.product(mask.shape):
-            print "Mask dimensions not equal to original image's"
+            print("Mask dimensions not equal to original image's")
             return False
 
         globalSize = [0]

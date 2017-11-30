@@ -80,8 +80,9 @@ class MMFilterEro:
 
         try:
             filename = "../OpenCL/MMero3D.cl"
-            self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
-        except Exception:
+            self.program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename).decode()).build()
+        except Exception as e:
+            print(e)
             return False
 
         if self.clattr.outputTmpBuffer is None:
@@ -123,7 +124,7 @@ class MMFilterEro:
 
 
             if self.clattr.outputTmpBuffer is None:
-                print "clattr.outputTmpBuffer is None!!"
+                print("clattr.outputTmpBuffer is None!!")
 
 
 

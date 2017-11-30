@@ -2,6 +2,10 @@ import numpy as np
 import pkg_resources as pkg
 import pyopencl as cl
 import pyF3D.FilterClasses as fc
+import os
+import sys
+
+currdir = os.path.dirname(os.path.realpath(__file__))
 
 class MedianFilter:
     """
@@ -14,7 +18,7 @@ class MedianFilter:
 
         self.clattr = None
         self.atts = None
-
+        
     def clone(self):
         return MedianFilter()
 
@@ -35,8 +39,7 @@ class MedianFilter:
     def loadKernel(self):
         try:
             filename = "../OpenCL/MedianFilter.cl"
-
-            program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename)).build()
+            program = cl.Program(self.clattr.context, pkg.resource_string(__name__, filename).decode()).build()
         except Exception as e:
             raise e
 
