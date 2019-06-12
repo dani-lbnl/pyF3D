@@ -78,20 +78,33 @@ def runPipeline(image, pipeline, platform=None):
     startIndex = 0
     stacks = []
     platform = check_if_valid_platform(platform)
+    devices = {}
+    for p in list(platform.keys()):
+        for d in p.get_devices(device_type=cl.device_type.GPU):
+            devices[d] = platform[p]
+        
+    print("Devices: ",devices)
 
     atts = FilterAttributes.FilteringAttributes()
-    atts.overlap = [0]*len(platform)
+#    atts.overlap = [0]*len(platform)
+    atts.overlap = [0]*len(devices)
+    print("Atts overlap: ", atts.overlap)
     jobs = []
-    with cf.ThreadPoolExecutor(len(platform)) as e:
-        for i in range(len(platform)):
+    with cf.ThreadPoolExecutor(len(devices)) as e:
+        for i in range(len(devices)):
             index = i
             if type(platform) is list:
                 p = platform[i]
                 maxSliceCount = None
             else:
-                p = list(platform.keys())[i]
-                maxSliceCount = list(platform.values())[i]
-            kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': p,
+                #p = list(platform.keys())[i]
+                d = list(devices.keys())[i]
+                #maxSliceCount = list(platform.values())[i]
+                maxSliceCount = list(devices.values())[i]
+                print("MaxSliceCount: ",maxSliceCount)
+            #kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'platform': p,
+            #          'sliceCount': maxSliceCount, 'index': index, 'stacks': stacks}
+            kwargs = {'image': image, 'pipeline': pipeline, 'attr': atts, 'device': d,
                       'sliceCount': maxSliceCount, 'index': index, 'stacks': stacks}
             jobs.append(e.submit(doFilter, **kwargs))
             # e.submit(doFilter, **kwargs)
@@ -100,11 +113,12 @@ def runPipeline(image, pipeline, platform=None):
         job.result()
     return stacks
 
-def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
+#def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
+def doFilter(image, pipeline, attr, device, sliceCount, index, stacks):
 
     global startIndex
 
-    device = platform.get_devices()[0]
+    #device = platform.get_devices()[0]
     device, context, queue = setup_cl_prereqs(device)
     clattr = ClAttributes.ClAttributes(context, device, queue, None, None, None)
     clattr.setMaxSliceCount(image, sliceCount)
@@ -116,6 +130,10 @@ def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
 
     maxSliceCount = clattr.maxSliceCount
     clattr.initializeData(image, attr, maxOverlap, maxSliceCount)
+    
+    print("maxSliceCount: ", index, maxSliceCount)
+    print("maxOverlap: ", index, maxOverlap)
+    print("Device:  ", index, device)
 
     for filter in pipeline:
         if filter.getInfo().useTempBuffer:
@@ -125,11 +143,12 @@ def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
     while True:
 
         if startIndex >= image.shape[0]:
-        #if startIndex >= image.shape[2]:
             break
         getNextRange(image, stackRange, maxSliceCount, maxOverlap)
         attr.sliceStart = stackRange[0]
         attr.sliceEnd = stackRange[1]
+        print("Slice start: ", index, attr.sliceStart)
+        print("Slice end: ", index, attr.sliceEnd)
         clattr.loadNextData(image, attr, stackRange[0], stackRange[1], maxOverlap)
         attr.overlap[index] = maxOverlap
         pipelineTime = 0
@@ -154,6 +173,7 @@ def doFilter(image, pipeline, attr, platform, sliceCount, index, stacks):
 
         result = clattr.writeNextData(attr, stackRange[0], stackRange[1], maxOverlap)
         addResultStack(stacks, stackRange[0], stackRange[1], result, clattr.device.name, pipelineTime)
+        
 
 
     clattr.inputBuffer.release()
@@ -249,7 +269,6 @@ def run_BilateralFilter(image, spatialRadius=3, rangeRadius=30, platform=None):
         3D image after bilateral filtering
     """
 
-
     pipeline = [bf.BilateralFilter(spatialRadius=spatialRadius, rangeRadius=rangeRadius)]
     stacks = runPipeline(image, pipeline, platform=platform)
     return reconstruct_final_image(stacks)
@@ -327,6 +346,8 @@ def run_MMFilterDil(image, mask='StructuredElementL', L=3, platform=None):
         3D image after dilation filtering
     """
 
+    print("Image shape inside run_dil: ",image.shape)
+    print("Mask shape: ",mask.shape)
     pipeline = [mmdil.MMFilterDil(mask=mask, L=L)]
     stacks = runPipeline(image, pipeline, platform=platform)
     return reconstruct_final_image(stacks)
@@ -454,7 +475,6 @@ def run_MMFilterOpe(image, mask='StructuredElementL', L=3, platform=None):
 def reconstruct_final_image(stacks):
         stacks = sorted(stacks)
         image = stacks[0].stack
-
         for stack in stacks[1:]:
             image = np.append(image, stack.stack, axis=0)
 
@@ -470,7 +490,7 @@ def getNextRange(image, range, sliceCount, overlap):
         #endIndex = image.shape[2]
         range[0] = max(0, startIndex)
         range[1] = max(0, startIndex - overlap) + sliceCount - overlap
-        if range[1] >= endIndex:
+        if range[1] >= endIndex or endIndex-range[1]<=20:
             range[1] = endIndex
         startIndex = range[1]
         return startIndex

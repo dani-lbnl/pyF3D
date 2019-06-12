@@ -18,10 +18,10 @@ class ClAttributes(object):
         self.outputTmpBuffer = outputTmpBuffer
 
         # multiply by 8 for 8bit images?
-        self.globalMemSize = int(min(self.device.max_mem_alloc_size * 0.5, sys.maxsize >> 1))
+        self.globalMemSize = int(min(self.device.max_mem_alloc_size * 0.3, sys.maxsize >> 1))
         # self.globalMemSize = int(min(self.device.max_mem_alloc_size * 0.5, sys.maxsize >> 1))
-        if 'CPU' in self.device.name:
-            self.globalMemSize = int(min(self.globalMemSize, 10*1024*1024*8))
+        #if 'CPU' in self.device.name:
+        #    self.globalMemSize = int(min(self.globalMemSize, 10*1024*1024*8))
 
         self.maxSliceCount = 0
 
