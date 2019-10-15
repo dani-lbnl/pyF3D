@@ -46,7 +46,7 @@ Copyright Notice
 
 F3D Image Processing and Analysis for Many- and Multi-core Platforms, Copyright (c) 2014, The Regents of the University
 of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S.
-Dept. of Energy).  All rights reserved.
+Dept. of Energy).  All rights reserved to CAMERA, the Center for Advanced Mathematics for Energy Research Applications.
 
 If you have questions about your rights to use or distribute this software, please contact Berkeley Lab's Technology
 Transfer Department at  TTD@lbl.gov.
